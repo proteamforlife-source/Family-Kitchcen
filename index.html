@@ -343,12 +343,12 @@ function dateKey(d){return d.toISOString().split('T')[0]}
 function todayKey(){return dateKey(new Date())}
 
 function init(){
-  setTimeout(function(){
-    g('loading').classList.add('hidden');
-    var n=localStorage.getItem('fk_name');
-    if(n){un=n;g('nameModal').classList.add('hidden');g('up').textContent='👤 '+n;loadPersonal();}
-    else{g('nameModal').classList.remove('hidden');}
-  },1200);
+  // Show app immediately, load data in background
+  g('loading').classList.add('hidden');
+  var n=localStorage.getItem('fk_name');
+  if(n){un=n;g('nameModal').classList.add('hidden');g('up').textContent='👤 '+n;loadPersonal();}
+  else{g('nameModal').classList.remove('hidden');}
+
   db.ref('recipes').on('value',function(snap){recipes=[];snap.forEach(function(c){recipes.push(c.val());});recipes.reverse();renderRecipes();updateTagsFilter();populateRecipePicker();});
   db.ref('events').on('value',function(snap){events=[];snap.forEach(function(c){events.push(c.val());});renderEvents();});
   db.ref('shopping').on('value',function(snap){shopItems=[];snap.forEach(function(c){shopItems.push(c.val());});renderShopping();});
