@@ -941,7 +941,11 @@ function renderTestRecipes(){
     return'<div class="rc" style="border-left:4px solid #f5a623">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
         '<div style="flex:1"><b>'+esc(r.name)+'</b> <span class="test-badge">TESTING</span>'+
-        '<div style="font-size:.76rem;color:var(--muted);margin-top:3px">'+esc(r.cat)+' · by '+esc(r.by)+'</div></div>'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">'+
+        avgStarsHtml(rd.avg)+
+        '<span class="rating-count">'+(rd.count?rd.avg.toFixed(1)+' ('+rd.count+')':'No ratings yet')+'</span>'+
+      '</div>'+
+      (userName?'<div style="margin-top:4px;display:flex;align-items:center;gap:6px"><span style="font-size:.75rem;color:var(--muted)">Your rating:</span>'+starsHtml(r.id,myR,true)+'</div>':'')+
         '<div style="display:flex;gap:4px">'+
           (isAdmin?'<button class="approve-btn" data-approve="'+r.id+'">✓ Approve</button>':'')+'</div>'+
       '</div>'+
