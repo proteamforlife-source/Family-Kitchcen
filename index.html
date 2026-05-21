@@ -42,7 +42,7 @@ header h1{font-size:1.1rem;font-weight:700}
 .upill{background:rgba(255,255,255,.25);padding:4px 11px;border-radius:20px;font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:5px}
 
 nav{background:#fff;border-bottom:2px solid var(--border);display:flex;position:sticky;top:47px;z-index:99;overflow-x:auto}
-nav button{flex:1;min-width:55px;padding:10px 3px;border:none;background:none;font-size:.65rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button{flex:1;min-width:55px;padding:10px 3px;border:none;background:none;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
 nav button.on{color:var(--terra);border-bottom-color:var(--terra)}
 
 main{max-width:720px;margin:0 auto;padding:14px 12px}
@@ -852,7 +852,7 @@ function buildTagFilter(){
 }
 function getAvgRating(r){var rats=r.ratings?Object.values(r.ratings):[];if(!rats.length)return{avg:0,count:0};return{avg:rats.reduce(function(a,b){return a+b.stars;},0)/rats.length,count:rats.length};}
 function starsHtml(rid,myR,ed){var h='<div class="stars">';for(var i=1;i<=5;i++)h+='<span class="star'+(i<=myR?' on':'')+'" data-star="'+i+'" data-rid="'+rid+'"'+(ed?'':' style="cursor:default"')+'>★</span>';return h+'</div>';}
-function avgStarsHtml(avg){var h='<div class="avg-stars">';for(var i=1;i<=5;i++)h+='<span class="avg-star'+(avg>=i?' on':'')+'">★</span>';return h+'</div>';}
+function avgStarsHtml(avg,rid){var pfx=rid?'id="avgr-'+rid+'"':'';var h='<div class="avg-stars" '+pfx+'>';for(var i=1;i<=5;i++)h+='<span class="avg-star'+(avg>=i?' on':'')+'">★</span>';return h+'</div>';}
 
 function renderRecipes(){
   var container=el('recList');var q=el('rSearch').value.toLowerCase();
@@ -881,7 +881,7 @@ function renderRecipes(){
             '<span style="font-size:.74rem;color:var(--muted)">by '+esc(r.by)+'</span>'+
           '</div>'+
           '<div style="margin-top:4px">'+(r.tags||[]).map(function(t){return'<span class="tag" style="cursor:default">'+esc(t)+'</span>';}).join('')+'</div>'+
-          '<div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap">'+avgStarsHtml(rd.avg)+'<span class="rating-count">'+(rd.count?rd.avg.toFixed(1)+' ('+rd.count+')':'No ratings')+'</span></div>'+
+          '<div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap">'+avgStarsHtml(rd.avg,r.id)+'<span class="rating-count" id="avgc-'+r.id+'">'+(rd.count?rd.avg.toFixed(1)+' ('+rd.count+')':'No ratings')+'</span></div>'+
           (userName?'<div style="margin-top:3px;display:flex;align-items:center;gap:5px"><span style="font-size:.73rem;color:var(--muted)">Your rating:</span>'+starsHtml(r.id,myR,true)+'</div>':'')+
         '</div>'+
         '<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;margin-left:7px">'+
@@ -1238,7 +1238,7 @@ function renderTestRecipes(){
           (r.photo?'<img src="'+esc(r.photo)+'" style="width:100%;max-height:140px;object-fit:cover;border-radius:9px;margin-bottom:8px;cursor:pointer" data-viewimg="'+esc(r.photo)+'" alt="">':'')+
           '<b>'+esc(r.name)+'</b> <span class="test-badge">TESTING</span>'+
           '<div style="font-size:.74rem;color:var(--muted);margin-top:2px">'+esc(r.cat)+' · by '+esc(r.by)+'</div>'+
-          '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'+avgStarsHtml(rd.avg)+'<span class="rating-count">'+(rd.count?rd.avg.toFixed(1)+' ('+rd.count+')':'No ratings')+'</span></div>'+
+          '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'+avgStarsHtml(rd.avg,r.id)+'<span class="rating-count" id="avgc-'+r.id+'">'+(rd.count?rd.avg.toFixed(1)+' ('+rd.count+')':'No ratings')+'</span></div>'+
           (userName?'<div style="margin-top:3px;display:flex;align-items:center;gap:5px"><span style="font-size:.72rem;color:var(--muted)">Your rating:</span>'+starsHtml(r.id,myR,true)+'</div>':'')+
         '</div>'+
         '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;margin-left:6px">'+
@@ -1384,7 +1384,7 @@ document.addEventListener('click',function(e){
   var preset=t.closest('[data-preset]');if(preset&&preset.closest('#presetTags')){var pt=preset.dataset.preset;var pi2=selectedPresetTags.indexOf(pt);if(pi2>-1)selectedPresetTags.splice(pi2,1);else selectedPresetTags.push(pt);buildPresetTags();return;}
   var catBtn=t.closest('[data-cat]');if(catBtn&&catBtn.closest('#catFilter')){activeCat=catBtn.dataset.cat;buildCatFilter();renderRecipes();return;}
   var tagBtn=t.closest('[data-tag]');if(tagBtn&&tagBtn.closest('#tagFilter')){activeTag=tagBtn.dataset.tag;buildTagFilter();renderRecipes();return;}
-  var star=t.closest('.star[data-rid]');if(star){if(!userName)return;var srid=star.dataset.rid;var sval=parseInt(star.dataset.star);skipRecipeRender=true;db.ref('recipes/'+srid+'/ratings/'+userName).set({stars:sval,by:userName});star.closest('.stars').querySelectorAll('.star').forEach(function(s){s.classList.toggle('on',parseInt(s.dataset.star)<=sval);});return;}
+  var star=t.closest('.star[data-rid]');if(star){if(!userName)return;var srid=star.dataset.rid;var sval=parseInt(star.dataset.star);skipRecipeRender=true;db.ref('recipes/'+srid+'/ratings/'+userName).set({stars:sval,by:userName});star.closest('.stars').querySelectorAll('.star').forEach(function(s){s.classList.toggle('on',parseInt(s.dataset.star)<=sval);});// Update avg display optimistically by re-reading all ratings from Firebase db.ref('recipes/'+srid+'/ratings').once('value',function(snap){var rats=[];snap.forEach(function(c){rats.push(c.val().stars);});// include this new rating if not already there var found=false;snap.forEach(function(c){if(c.key===userName)found=true;});if(!found)rats.push(sval);var avg=rats.length?rats.reduce(function(a,b){return a+b;},0)/rats.length:sval;var cnt=rats.length;var avgEl=el('avgr-'+srid);var cntEl=el('avgc-'+srid);if(avgEl){avgEl.querySelectorAll('.avg-star').forEach(function(s,i){s.classList.toggle('on',avg>=i+1);});}if(cntEl)cntEl.textContent=avg.toFixed(1)+' ('+cnt+')';});return;}
   var togr=t.closest('[data-togr]');if(togr){var rb=el('rb-'+togr.dataset.togr);rb.classList.toggle('on');togr.textContent=rb.classList.contains('on')?'▲ Hide':'▼ View';return;}
   var togtr=t.closest('[data-togtr]');if(togtr){var trb=el('trb-'+togtr.dataset.togtr);trb.classList.toggle('on');togtr.textContent=trb.classList.contains('on')?'▲ Hide':'▼ View';return;}
   var togpr=t.closest('[data-togpr]');if(togpr){var prb=el('prb-'+togpr.dataset.togpr);prb.classList.toggle('on');togpr.textContent=prb.classList.contains('on')?'▲ Hide':'▼ View';return;}
