@@ -1,7 +1,6 @@
 // ─── CALENDAR.JS ──────────────────────────────────────────────────────────
 var calView = 'month', calOffset = 0, calEvents = [], calBirthdays = [];
 
-// Event type config
 var CAL_TYPES = {
   event:    { icon: '📅', bg: '#fff0eb', border: '#f0c4b0', color: '#96705a', label: 'Event' },
   meal:     { icon: '🍽', bg: '#eaf3ea', border: '#a0d0a0', color: '#2a6a2a', label: 'Meal' },
@@ -14,23 +13,16 @@ var CAL_TYPES = {
   workout:  { icon: '💪', bg: '#fff0e8', border: '#f0c0a0', color: '#7a3010', label: 'Workout' }
 };
 
-// Collect all calendar items for a given date key
 function getCalItemsForDate(dk) {
   var items = [];
-
-  // Events
   events.forEach(function (ev) {
     if (ev.date === dk) items.push({ type: 'event', text: ev.name, color: ev.color, source: 'Events' });
   });
-
-  // Personal schedule
   if (personalData && personalData.days && personalData.days[dk] && personalData.days[dk].items) {
     Object.values(personalData.days[dk].items).forEach(function (item) {
       items.push({ type: item.type || 'personal', text: item.text, source: 'My Schedule' });
     });
   }
-
-  // Birthdays from members
   Object.values(members).forEach(function (m) {
     if (!m.birthday) return;
     var bd = new Date(m.birthday + 'T00:00:00');
@@ -39,8 +31,6 @@ function getCalItemsForDate(dk) {
       items.push({ type: 'birthday', text: m.name + (age !== null ? ' turns ' + age : '\'s birthday'), source: 'Birthdays' });
     }
   });
-
-  // Calendar events (from db.ref('calendarEvents'))
   calEvents.forEach(function (ev) {
     if (ev.type === 'birthday') {
       if (ev.date && ev.date.slice(5) === dk.slice(5)) {
@@ -51,18 +41,14 @@ function getCalItemsForDate(dk) {
       if (ev.date === dk) items.push({ type: ev.type || 'event', text: ev.name, source: 'Calendar', id: ev.id, ev: ev });
     }
   });
-
-  // Bills (admin/Mum only)
   if (userName === ADMIN) {
     bills.forEach(function (b) {
       if (!b.paid && b.due === dk) items.push({ type: 'bill', text: b.name + (b.amount ? ' $' + b.amount.toFixed(2) : ''), source: 'Bills' });
     });
   }
-
   return items;
 }
 
-// Planner meal cache
 var plannerCalCache = {};
 function loadPlannerForCalendar(wkKeys, callback) {
   var pending = wkKeys.length;
@@ -112,24 +98,51 @@ function getMonthDatesForCal(offset) {
   return { days: days, label: d.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' }), year: yr, month: mo };
 }
 
-function renderCalMonth() {
-  var mdata = getMonthDatesForCal(calOffset);
-  el('calLabel').textContent = mdata.label;
-  var jumpHtml = '<select id="calMonthJump" style="margin-left:8px;padding:4px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-weight:600;outline:none;font-family:inherit;background:#fff;color:var(--charcoal);cursor:pointer">';
-  var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// ─── Month jump modal ──────────────────────────────────────────────────────
+function openMonthJump() {
+  var existing = el('calMonthJumpModal');
+  if (existing) { existing.remove(); return; }
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var now = new Date();
-  for (var y = now.getFullYear() - 1; y <= now.getFullYear() + 2; y++) {
+  var curYear = now.getFullYear();
+  var html = '<div id="calMonthJumpModal" style="position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(42,34,24,.45)">';
+  html += '<div style="background:#fff;border-radius:18px;padding:20px;width:320px;max-width:92vw;box-shadow:0 8px 32px rgba(42,34,24,.18)">';
+  html += '<div style="font-weight:700;font-size:.95rem;color:var(--charcoal);margin-bottom:14px;text-align:center">Jump to Month</div>';
+  for (var y = curYear - 1; y <= curYear + 2; y++) {
+    html += '<div style="margin-bottom:10px"><div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:.05em">' + y + '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">';
     months.forEach(function (m, mi) {
       var val = (y - now.getFullYear()) * 12 + (mi - now.getMonth());
-      jumpHtml += '<option value="' + val + '"' + (val === calOffset ? ' selected' : '') + '>' + m + ' ' + y + '</option>';
+      var isNow = y === now.getFullYear() && mi === now.getMonth();
+      var isSel = val === calOffset;
+      html += '<button data-jumpval="' + val + '" style="padding:7px 4px;border-radius:9px;border:1.5px solid ' + (isSel ? 'var(--terra)' : 'var(--border)') + ';background:' + (isSel ? 'var(--terra)' : isNow ? 'var(--cream)' : '#fff') + ';color:' + (isSel ? '#fff' : 'var(--charcoal)') + ';font-size:.78rem;font-weight:' + (isNow || isSel ? '700' : '500') + ';cursor:pointer">' + m + '</button>';
     });
+    html += '</div></div>';
   }
-  jumpHtml += '</select>';
-  el('calLabel').innerHTML = mdata.label + jumpHtml;
+  html += '<button style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:none;background:var(--cream);color:var(--muted);font-size:.84rem;cursor:pointer" id="calJumpClose">Close</button>';
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  el('calJumpClose').addEventListener('click', function () { el('calMonthJumpModal').remove(); });
+  el('calMonthJumpModal').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-jumpval]');
+    if (btn) {
+      calOffset = parseInt(btn.dataset.jumpval);
+      el('calMonthJumpModal').remove();
+      renderCalendar();
+      return;
+    }
+    if (e.target === el('calMonthJumpModal')) el('calMonthJumpModal').remove();
+  });
+}
+
+function renderCalMonth() {
+  var mdata = getMonthDatesForCal(calOffset);
+  // Tappable label — no inline dropdown
+  el('calLabel').innerHTML = '<span id="calMonthJumpBtn" style="cursor:pointer;border-bottom:1.5px dashed var(--terra);padding-bottom:1px">' + mdata.label + ' ▾</span>';
   setTimeout(function () {
-    var sel = el('calMonthJump');
-    if (sel) sel.addEventListener('change', function () { calOffset = parseInt(this.value); renderCalendar(); });
-  }, 50);
+    var btn = el('calMonthJumpBtn');
+    if (btn) btn.addEventListener('click', openMonthJump);
+  }, 30);
   var today = todayKey();
   var firstDay = mdata.days[0].getDay(); if (firstDay === 0) firstDay = 7;
   var wkKeys = [];
@@ -196,7 +209,7 @@ function renderCalDay() {
   loadPlannerForCalendar([wk], function () {
     var allItems = getCalItemsForDate(dk).concat(getMealsForDate(dk));
     if (!allItems.length) {
-      el('calGrid').innerHTML = '<div class="cal-day-view"><div class="cal-day-section"><div style="text-align:center;padding:24px;color:var(--muted)">Nothing on today ☀️<br><span style="font-size:.82rem">Enjoy the quiet!</span></div></div></div>';
+      el('calGrid').innerHTML = '<div class="cal-day-view"><div class="cal-day-section"><div style="text-align:center;padding:24px;color:var(--muted)">Nothing on ☀️<br><span style="font-size:.82rem">Enjoy the quiet!</span></div></div></div>';
       return;
     }
     var groups = { birthday: [], event: [], meal: [], personal: [] };
@@ -218,9 +231,9 @@ function renderCalDay() {
         if (item.source) html += '<div class="cal-day-item-sub">' + esc(item.source) + '</div>';
         html += '</div>';
         if (item.id && (item.type === 'birthday' || item.type === 'event')) {
-          html += '<div style="display:flex;gap:4px">';
-          html += '<button class="sm sx" style="font-size:.68rem;padding:2px 7px" data-caledit="' + item.id + '">Edit</button>';
-          html += '<button class="xbtn" data-caldel="' + item.id + '">🗑</button>';
+          html += '<div style="display:flex;gap:6px;align-items:center">';
+          html += '<button class="sm sx" style="font-size:.72rem;padding:4px 10px;border-radius:8px" data-caledit="' + item.id + '">Edit</button>';
+          html += '<button style="background:none;border:none;font-size:1rem;cursor:pointer;padding:2px 4px" data-caldel="' + item.id + '">🗑</button>';
           html += '</div>';
         }
         html += '</div>';
@@ -232,14 +245,12 @@ function renderCalDay() {
   });
 }
 
-// ─── FIREBASE LISTENER — intentionally top-level ───────────────────────────
-// Safe here because db is initialised in utils.js which loads before calendar.js
+// ─── FIREBASE LISTENER ─────────────────────────────────────────────────────
 db.ref('calendarEvents').on('value', function (snap) {
   calEvents = []; snap.forEach(function (c) { calEvents.push(c.val()); });
   if (el('pg-c') && el('pg-c').classList.contains('on')) renderCalendar();
 });
 
-// ─── Calendar event edit state ─────────────────────────────────────────────
 var editCalId = '';
 function openCalEdit(id) {
   var ev = calEvents.find(function (x) { return x.id === id; }); if (!ev) return;
@@ -260,7 +271,7 @@ function openCalEdit(id) {
   el('calAddMod').classList.remove('h');
 }
 
-// ─── ALL DOM EVENT LISTENERS inside DOMContentLoaded ──────────────────────
+// ─── DOM LISTENERS ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
 
   var calPrev = el('calPrev');
@@ -328,7 +339,6 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(renderCalendar, 400);
   });
 
-  // View toggle & day click — delegated on document
   document.addEventListener('click', function (e) {
     var cv = e.target.closest('[data-calview]');
     if (cv && el('pg-c') && el('pg-c').classList.contains('on')) {
