@@ -12,8 +12,7 @@ function renderDashboard(){
       var todayItems=[];if(personalData&&personalData.days&&personalData.days[today]&&personalData.days[today].items)todayItems=Object.values(personalData.days[today].items);
       var answersList=Object.entries(dqData).map(function(e){
         var col=members[e[0]]?members[e[0]].color:'#8A7A6E';
-        var isMe=e[0]===userName;
-        return'<span class="dq-answer"'+(isMe?' data-dqa="clear" style="cursor:pointer;opacity:.65;text-decoration:line-through"':'')+'>'+avt(e[0],col,16)+'<span style="margin-left:3px;font-size:.75rem">'+esc(e[0])+': '+(e[1]==='yes'?'Yes':'No')+'</span></span>';
+        return'<span class="dq-answer">'+avt(e[0],col,16)+'<span style="margin-left:3px;font-size:.75rem">'+esc(e[0])+': '+(e[1]==='yes'?'Yes':'No')+'</span></span>';
       }).join('');
       var lastRead=personalData.lastRead||{};
       var now=new Date();now.setHours(0,0,0,0);
@@ -69,13 +68,11 @@ function buildDash(allMsgs,answersList,todayItems,winner,dinners,nextEv,dqData,l
     '</div>';
   }
 
-  var dqButtons='';
-  if(myAnswer){
-    dqButtons='<p style="font-size:.88rem;opacity:.9">You said: '+(myAnswer==='yes'?'Yes, I\'ll be home 🏠':'No, I\'m out 🌙')+'</p>';
-  } else {
-    dqButtons='<p style="font-size:.86rem;color:rgba(255,255,255,.8);margin-bottom:8px">Let the family know!</p>'+
-      '<div class="dq-btns"><button class="dq-btn yes" data-dqa="yes">Yes 🏠</button><button class="dq-btn" data-dqa="no">No 🌙</button></div>';
-  }
+  var dqButtons=
+    '<div class="dq-btns">'+
+      '<button class="dq-btn yes'+(myAnswer==='yes'?' on':'')+'" data-dqa="yes">Yes</button>'+
+      '<button class="dq-btn'+(myAnswer==='no'?' on':'')+'" data-dqa="no">No</button>'+
+    '</div>';
 
   el('dashContent').innerHTML=
     '<div style="font-size:.82rem;color:var(--muted);font-weight:600;margin-bottom:12px;text-align:center">'+todayFmt+'</div>'+
