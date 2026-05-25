@@ -102,7 +102,24 @@
 <div class="minimod h" id="settingsMod"><div class="minibox" style="max-width:360px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="margin-bottom:0">My Settings</h3><button class="sm sx" id="settingsClose">&#x2715;</button></div><div id="settingsBody"></div></div></div>
 <div class="minimod h" id="evInviteMod"><div class="minibox"><h3 id="evInviteTitle">Invite to Event</h3><p style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Select who to invite:</p><div class="mem-select" id="evInviteSelect"></div><div class="mbrow"><button class="sm sx" id="evInviteCancel">Cancel</button><button class="sm st" id="evInviteSave">Send Invites</button></div></div></div>
 <div id="imgModal"><img id="imgModalImg" src="" alt=""><button onclick="el('imgModal').classList.remove('on')">&#x2715;</button></div>
-
+<div class="minimod h" id="plannerMod"><div class="minibox" style="max-width:380px">
+  <h3 id="plannerModTitle">Add to Planner</h3>
+  <div id="plannerDateList" style="display:flex;flex-direction:column;gap:8px;margin:14px 0;max-height:320px;overflow-y:auto"></div>
+  <div style="margin-bottom:12px">
+    <select id="plannerMealType" style="width:100%;padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);font-size:.9rem;background:var(--cream);color:var(--charcoal)">
+      <option value="D">Dinner</option>
+      <option value="L">Lunch</option>
+      <option value="B">Breakfast</option>
+      <option value="S">Snack</option>
+    </select>
+  </div>
+  <div style="margin-bottom:14px">
+    <input type="text" id="plannerModNotes" placeholder="Notes (optional)" style="width:100%;box-sizing:border-box">
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="sm sx" id="plannerModCancel">Cancel</button>
+  </div>
+</div></div>
 <div id="cookMode">
   <div class="ckh"><div class="ckt" id="ckTitle"></div><div style="display:flex;gap:7px"><button class="ckb2" id="ckPrintBtn">Print</button><button class="ckb2" id="ckAllBtn">All Steps</button><button class="ckb2" id="ckExitBtn">Exit</button></div></div>
   <div class="ckbody" id="ckBody"></div>
