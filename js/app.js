@@ -52,56 +52,9 @@ document.addEventListener('change',function(e){
 
 document.addEventListener('click',function(e){
   var t=e.target;
+
   var vi=t.closest('[data-viewimg]');if(vi){el('imgModalImg').src=vi.dataset.viewimg;el('imgModal').classList.add('on');return;}
   var dqa=t.closest('[data-dqa]');if(dqa){if(!userName)return;db.ref('dinnerQ/'+todayKey()+'/'+userName).set(dqa.dataset.dqa);setTimeout(renderDashboard,400);return;}
-
-  // ── RECIPE LOCK TOGGLE ──
-  var lockr=t.closest('[data-lockr]');
-  if(lockr){
-    var lrid=lockr.dataset.lockr;
-    var lrec=recipes.find(function(r){return r.id===lrid;})||testRecipes.find(function(r){return r.id===lrid;});
-    if(!lrec)return;
-    db.ref('recipes/'+lrid+'/locked').set(!lrec.locked);
-    return;
-  }
-
-  // ── RECIPE EDIT (with lock check) ──
-  var editr=t.closest('[data-editr]');
-  if(editr){
-    var erid=editr.dataset.editr;
-    var erec=recipes.find(function(r){return r.id===erid;});
-    if(erec&&erec.locked&&cachedPin){
-      openPinModal(function(){el('ef-'+erid).classList.toggle('on');});
-    } else {
-      el('ef-'+erid).classList.toggle('on');
-    }
-    return;
-  }
-
-  // ── TESTING EDIT (with lock check) ──
-  var editt=t.closest('[data-editt]');
-  if(editt){
-    var etid=editt.dataset.editt;
-    var etrec=testRecipes.find(function(r){return r.id===etid;});
-    if(etrec&&etrec.locked&&cachedPin){
-      openPinModal(function(){el('tef-'+etid).classList.toggle('on');});
-    } else {
-      el('tef-'+etid).classList.toggle('on');
-    }
-    return;
-  }
-
-  // ── RECIPE DELETE (with lock check) ──
-  var delr=t.closest('[data-delr]');
-  if(delr){
-    if(userName!==ADMIN){alert('Only Mum can delete.');return;}
-    var drid=delr.dataset.delr;
-    var drec=recipes.find(function(r){return r.id===drid;})||testRecipes.find(function(r){return r.id===drid;});
-    var doDelete=function(){if(!confirm('Remove?'))return;db.ref('recipes/'+drid).remove();};
-    if(drec&&drec.locked&&cachedPin){openPinModal(doDelete);}else{doDelete();}
-    return;
-  }
-
   var st2=t.closest('[data-switchtab]');if(st2&&!t.closest('[data-addmeal]')&&!t.closest('[data-quickdinner]')){switchTab(st2.dataset.switchtab);return;}
   var sc2=t.closest('[data-switchchat]');if(sc2){openChat();return;}
   var qd=t.closest('[data-quickdinner]');if(qd){var todayIdx2=new Date().getDay()-1;if(todayIdx2<0)todayIdx2=6;mealCtx={wk:dKey(getWeekDates(0)[0]),di:String(todayIdx2),slot:'D'};el('mealModTitle').textContent='Suggest for Tonight';el('mealModInp').value='';el('mealModUrl').value='';el('mealMod').classList.remove('h');return;}
@@ -130,15 +83,17 @@ document.addEventListener('click',function(e){
   var daci=t.closest('[data-recname]');if(daci){var evid2=daci.dataset.evid,inp2=el('dacinp-'+evid2);if(inp2)inp2.value=daci.dataset.recname;var dal=el('daclist-'+evid2);if(dal)dal.style.display='none';return;}
   var evinvite=t.closest('[data-evinvite]');if(evinvite){evInviteId=evinvite.dataset.evinvite;var ev2=events.find(function(x){return x.id===evInviteId;});el('evInviteTitle').textContent='Invite to '+(ev2?ev2.name:'Event');el('evInviteSelect').innerHTML=Object.keys(members).filter(function(n){return n!==userName;}).map(function(n){var m=members[n];return'<div class="mem-chip" data-invitemem="'+esc(n)+'">'+avt(n,m.color,18)+'<span>'+esc(n)+'</span></div>';}).join('');el('evInviteMod').classList.remove('h');return;}
   var invitemem=t.closest('[data-invitemem]');if(invitemem&&invitemem.closest('#evInviteSelect')){invitemem.classList.toggle('on');return;}
+
+  // ── ADD TO PLANNER ──
   var addplan=t.closest('[data-addplan]');
   if(addplan){
     if(!userName){alert('Sign in first!');return;}
     var pname=addplan.dataset.planname||'';
-    plannerCtxRecId=addplan.dataset.addplan;
     var today=new Date();
     var dayOpts='';
     for(var di=0;di<14;di++){
-      var dd=new Date(today);dd.setDate(today.getDate()+di);
+      var dd=new Date(today);
+      dd.setDate(today.getDate()+di);
       var dk=dKey(dd);
       var dow=dd.getDay()-1;if(dow<0)dow=6;
       var wkk=dKey((function(d2){var m=new Date(d2);var dw=m.getDay()||7;m.setDate(m.getDate()-dw+1);return m;})(dd));
@@ -154,23 +109,26 @@ document.addEventListener('click',function(e){
         '<option value="B">☀️ Breakfast</option>'+
         '<option value="S">🍎 Snack</option>'+
       '</select>'+
-      '<input type="text" id="plannerModNotes" placeholder="Notes (optional)" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:.88rem;margin-bottom:12px;outline:none;font-family:inherit">'+
+      '<input type="text" id="plannerModNotes" placeholder="Notes (optional)" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:.88rem;margin-bottom:12px;outline:none;font-family:inherit;box-sizing:border-box">'+
       '<div style="display:flex;gap:8px;justify-content:flex-end">'+
         '<button class="sm sx" id="plannerModCancel">Cancel</button>'+
         '<button class="btn" id="plannerModSave" style="padding:7px 18px">Add to Planner</button>'+
       '</div>';
     el('plannerMod').classList.remove('h');
-    el('plannerModCancel').addEventListener('click',function(){el('plannerMod').classList.add('h');});
-    el('plannerModSave').addEventListener('click',function(){
-      var sel=el('plannerModDay').value.split('|');
-      var wk2=sel[0],di2=sel[1],slot2=el('plannerModSlot').value;
-      var notes2=el('plannerModNotes').value.trim();
+    el('plannerModCancel').onclick=function(){el('plannerMod').classList.add('h');};
+    el('plannerModSave').onclick=function(){
+      var parts=el('plannerModDay').value.split('|');
+      var wk2=parts[0],di2=parts[1],slot2=el('plannerModSlot').value;
+      var notesVal=el('plannerModNotes').value.trim();
       var mid='m'+Date.now();
-      db.ref('planner/'+wk2+'/'+di2+'/'+slot2+'/'+mid).set({id:mid,name:pname,votes:{},cooker:'',by:userName,notes:notes2||''});
+      var entry={id:mid,name:pname,votes:{},cooker:'',by:userName};
+      if(notesVal)entry.notes=notesVal;
+      db.ref('planner/'+wk2+'/'+di2+'/'+slot2+'/'+mid).set(entry);
       el('plannerMod').classList.add('h');
-    });
+    };
     return;
   }
+
   var addmeal=t.closest('[data-addmeal]');if(addmeal){if(!userName){alert('Sign in first!');return;}mealCtx={wk:addmeal.dataset.wk,di:addmeal.dataset.di,slot:addmeal.dataset.slot};el('mealModTitle').textContent='Suggest for '+DAYS[parseInt(addmeal.dataset.di)];el('mealModInp').value='';el('mealModUrl').value='';el('mealMod').classList.remove('h');setTimeout(function(){el('mealModInp').focus();},80);return;}
   var mealrec=t.closest('[data-mealrec]');if(mealrec){el('mealModInp').value=mealrec.dataset.mealrec;el('mealSugList').innerHTML='';el('mealSugList').style.display='none';return;}
   var vote=t.closest('[data-vote]');if(vote){if(!userName)return;var vref=db.ref('planner/'+vote.dataset.wk+'/'+vote.dataset.di+'/'+vote.dataset.slot+'/'+vote.dataset.vote+'/votes/'+userName);vref.once('value',function(s){if(s.val())vref.remove();else vref.set(true);setTimeout(function(){if(el('pg-d').classList.contains('on'))renderDashboard();},500);});return;}
@@ -202,40 +160,11 @@ document.addEventListener('click',function(e){
   var caledit=t.closest('[data-caledit]');if(caledit){openCalEdit(caledit.dataset.caledit);return;}
   var caldel=t.closest('[data-caldel]');if(caldel){if(!confirm('Remove this?'))return;db.ref('calendarEvents/'+caldel.dataset.caldel).remove();setTimeout(renderCalendar,300);return;}
   var delbill=t.closest('[data-delbill]');if(delbill){if(userName!==ADMIN)return;if(!confirm('Remove this bill?'))return;db.ref('bills/'+delbill.dataset.delbill).remove();return;}
-  // PIN keypad
-  var pk=t.closest('[data-pk]');
-  if(pk&&pk.closest('#pinMod')){
-    var key=pk.dataset.pk;
-    if(key==='back'){pinBuffer=pinBuffer.slice(0,-1);}
-    else if(key==='clear'){pinBuffer='';}
-    else if(pinBuffer.length<4){pinBuffer+=key;}
-    updatePinDots();
-    if(pinBuffer.length===4){
-      if(cachedPin&&pinBuffer===cachedPin){closePinModal();if(pinCallback)pinCallback();}
-      else{el('pinErr').textContent='Incorrect PIN — try again';pinShake();pinBuffer='';updatePinDots();}
-    }
-    return;
-  }
-  if(t.closest('#pinCancel')){closePinModal();return;}
-  if(t.closest('#pinSetupSave')){var v=el('pinSetupInp').value.trim();if(!/^\d{4}$/.test(v)){el('pinErr').textContent='Please enter exactly 4 digits';return;}db.ref('settings/recipePin').set(v);cachedPin=v;el('pinSetupInp').value='';closePinModal();if(pinCallback)pinCallback();return;}
 });
 
 var editBillId='';
 el('editBillCancel').addEventListener('click',function(){el('editBillMod').classList.add('h');editBillId='';});
 el('editBillSave').addEventListener('click',function(){if(!editBillId)return;db.ref('bills/'+editBillId).update({name:el('ebName').value.trim(),amount:parseFloat(el('ebAmt').value)||0,freq:el('ebFreq').value,due:el('ebDue').value,cat:el('ebCat').value,notes:el('ebNotes').value.trim()});el('editBillMod').classList.add('h');editBillId='';});
 function openEditBill(bid){var b=bills.find(function(x){return x.id===bid;});if(!b)return;editBillId=bid;el('ebName').value=b.name||'';el('ebAmt').value=b.amount||'';el('ebFreq').value=b.freq||'monthly';el('ebDue').value=b.due||'';el('ebCat').value=b.cat||'other';el('ebNotes').value=b.notes||'';el('editBillMod').classList.remove('h');}
-
-function openPinModal(onSuccess){
-  pinBuffer='';pinCallback=onSuccess;updatePinDots();el('pinErr').textContent='';
-  var hasPin=!!cachedPin;
-  el('pinPad').style.display=hasPin?'grid':'none';
-  el('pinSetupWrap').style.display=hasPin?'none':'block';
-  el('pinModTitle').textContent=hasPin?'🔒 Recipe Locked':'🔒 Set a PIN';
-  el('pinModDesc').textContent=hasPin?'Enter your household PIN to continue':'Create a 4-digit PIN to protect recipes';
-  el('pinMod').classList.remove('h');
-}
-function updatePinDots(){for(var i=0;i<4;i++){var d=el('pd'+i);if(d)d.className='pin-dot2'+(i<pinBuffer.length?' filled':'');}}
-function closePinModal(){el('pinMod').classList.add('h');pinBuffer='';pinCallback=null;el('pinErr').textContent='';}
-function pinShake(){var box=el('pinModBox');box.classList.remove('pin-shake');void box.offsetWidth;box.classList.add('pin-shake');setTimeout(function(){box.classList.remove('pin-shake');},400);}
 
 init();
