@@ -127,7 +127,9 @@ document.addEventListener('click',function(e){
     var lrid=lockr.dataset.lockr;
     var lrec=recipes.find(function(r){return r.id===lrid;})||testRecipes.find(function(r){return r.id===lrid;});
     if(!lrec)return;
-    db.ref('recipes/'+lrid+'/locked').set(!lrec.locked);
+    var nextLocked=!Boolean(lrec.locked);
+    db.ref('recipes/'+lrid+'/locked').set(nextLocked);
+    lrec.locked=nextLocked;
     return;
   }
 
