@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var q = el('mealModInp').value.toLowerCase(), list = el('mealSugList');
       list.innerHTML = '';
       if (!q) { list.style.display = 'none'; return; }
-      var m = recipes.filter(function (r) { return r.name.toLowerCase().indexOf(q) > -1; }).slice(0, 5);
+      var m = recipes.concat(testRecipes).filter(function (r) { return r.name.toLowerCase().indexOf(q) > -1; }).slice(0, 5);
       if (!m.length) { list.style.display = 'none'; return; }
       list.style.display = 'block';
       list.innerHTML = m.map(function (r) {
