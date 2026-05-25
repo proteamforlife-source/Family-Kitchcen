@@ -327,3 +327,19 @@ main{max-width:720px;margin:0 auto;padding:14px 12px}
 .cal-type-btn{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);font-size:.78rem;font-weight:700;cursor:pointer;background:#fff;color:var(--muted);transition:all .2s}
 .cal-type-btn.on{border-color:var(--terra);background:#fff8f5;color:var(--terra)}
 .cal-birthday-section{background:linear-gradient(135deg,#fff8e1,#fffde7);border:1.5px solid #ffe082;border-radius:11px;padding:12px;margin-bottom:12px}
+.rtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+  margin-bottom: 2px;
+}
+.rtag {
+  font-size: .68rem;
+  background: #f0ebe5;
+  color: var(--sage);
+  border-radius: 20px;
+  padding: 2px 9px;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
