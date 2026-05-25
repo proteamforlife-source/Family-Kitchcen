@@ -5,8 +5,20 @@ var tabs=['d','r','p','e','c','b','t','s','m'];
 var pinBuffer='';
 var pinCallback=null;
 var cachedPin=null;
-var plannerCtxRecId='';
 db.ref('settings/recipePin').on('value',function(snap){cachedPin=snap.val()||null;});
+
+// ── RECIPE PROTECTION HELPERS ──
+function attemptProtectedAction(recipeId,action){
+  var rec=recipes.find(function(r){return r.id===recipeId;})||testRecipes.find(function(r){return r.id===recipeId;});
+  if(!rec||!rec.locked||!cachedPin){action();return;}
+  openPinModal(action);
+}
+
+function openRecipeEditor(recipeId){
+  var isTest=testRecipes.find(function(r){return r.id===recipeId;});
+  if(isTest){el('tef-'+recipeId).classList.toggle('on');}
+  else{el('ef-'+recipeId).classList.toggle('on');}
+}
 
 function switchTab(id){
   tabs.forEach(function(t){el('pg-'+t).classList.remove('on');el('tb-'+t).classList.remove('on');});
@@ -67,6 +79,23 @@ document.addEventListener('click',function(e){
   var togtr=t.closest('[data-togtr]');if(togtr){var trb=el('trb-'+togtr.dataset.togtr);trb.classList.toggle('on');togtr.textContent=trb.classList.contains('on')?'Hide':'View';return;}
   var togpr=t.closest('[data-togpr]');if(togpr){var prb=el('prb-'+togpr.dataset.togpr);prb.classList.toggle('on');togpr.textContent=prb.classList.contains('on')?'Hide':'View';return;}
   var cel=t.closest('[data-canceledit]');if(cel){el('ef-'+cel.dataset.canceledit).classList.remove('on');return;}
+
+  // ── RECIPE EDIT ──
+  var editr=t.closest('[data-editr]');
+  if(editr){
+    var erid=editr.dataset.editr;
+    attemptProtectedAction(erid,function(){el('ef-'+erid).classList.toggle('on');});
+    return;
+  }
+
+  // ── TESTING EDIT ──
+  var editt=t.closest('[data-editt]');
+  if(editt){
+    var etid=editt.dataset.editt;
+    attemptProtectedAction(etid,function(){el('tef-'+etid).classList.toggle('on');});
+    return;
+  }
+
   var saver=t.closest('[data-saver]');if(saver){var rid2=saver.dataset.saver;db.ref('recipes/'+rid2).update({name:el('en-'+rid2).value.trim(),cat:el('ec-'+rid2).value,tags:el('et-'+rid2).value.split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean),servings:el('esv-'+rid2).value,diff:el('edf-'+rid2).value,ings:el('ei-'+rid2).value.split(',').map(function(s){return s.trim();}).filter(Boolean),steps:el('es-'+rid2).value.trim()});el('ef-'+rid2).classList.remove('on');return;}
   var cancelt=t.closest('[data-cancelt]');if(cancelt){el('tef-'+cancelt.dataset.cancelt).classList.remove('on');return;}
   var savet=t.closest('[data-savet]');if(savet){var tid=savet.dataset.savet;db.ref('recipes/'+tid).update({name:el('ten-'+tid).value.trim(),cat:el('tec-'+tid).value,tags:el('tet-'+tid)?el('tet-'+tid).value.split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean):[],ings:el('tei-'+tid).value.split(',').map(function(s){return s.trim();}).filter(Boolean),steps:el('tes-'+tid).value.trim()});el('tef-'+tid).classList.remove('on');return;}
@@ -77,6 +106,29 @@ document.addEventListener('click',function(e){
   var addtnote=t.closest('[data-addtnote]');if(addtnote){var tnrid=addtnote.dataset.addtnote,tninp=el('tni-'+tnrid);if(!tninp||!tninp.value.trim())return;var tnid='n'+Date.now();db.ref('recipes/'+tnrid+'/notes/'+tnid).set({id:tnid,text:tninp.value.trim(),by:userName||'Family',color:userColor});tninp.value='';return;}
   var delnote=t.closest('[data-delnote]');if(delnote){db.ref('recipes/'+delnote.dataset.recid+'/notes/'+delnote.dataset.delnote).remove();return;}
   var approve=t.closest('[data-approve]');if(approve){if(userName!==ADMIN){alert('Only Mum can approve.');return;}db.ref('recipes/'+approve.dataset.approve+'/testing').set(false);alert('Recipe approved!');return;}
+
+  // ── RECIPE DELETE ──
+  var delr=t.closest('[data-delr]');
+  if(delr){
+    if(userName!==ADMIN){alert('Only Mum can delete.');return;}
+    var drid=delr.dataset.delr;
+    attemptProtectedAction(drid,function(){
+      if(!confirm('Remove this recipe?'))return;
+      db.ref('recipes/'+drid).remove();
+    });
+    return;
+  }
+
+  // ── LOCK TOGGLE ──
+  var lockr=t.closest('[data-lockr]');
+  if(lockr){
+    var lrid=lockr.dataset.lockr;
+    var lrec=recipes.find(function(r){return r.id===lrid;})||testRecipes.find(function(r){return r.id===lrid;});
+    if(!lrec)return;
+    db.ref('recipes/'+lrid+'/locked').set(!lrec.locked);
+    return;
+  }
+
   var delev=t.closest('[data-delev]');if(delev){if(userName!==ADMIN){alert('Only Mum can delete.');return;}if(!confirm('Remove?'))return;db.ref('events/'+delev.dataset.delev).remove();return;}
   var deld=t.closest('[data-deld]');if(deld){db.ref('events/'+deld.dataset.dev+'/dishes/'+deld.dataset.deld).remove();return;}
   var dadd=t.closest('[data-dadd]');if(dadd){addDish(dadd.dataset.dadd);return;}
@@ -160,11 +212,41 @@ document.addEventListener('click',function(e){
   var caledit=t.closest('[data-caledit]');if(caledit){openCalEdit(caledit.dataset.caledit);return;}
   var caldel=t.closest('[data-caldel]');if(caldel){if(!confirm('Remove this?'))return;db.ref('calendarEvents/'+caldel.dataset.caldel).remove();setTimeout(renderCalendar,300);return;}
   var delbill=t.closest('[data-delbill]');if(delbill){if(userName!==ADMIN)return;if(!confirm('Remove this bill?'))return;db.ref('bills/'+delbill.dataset.delbill).remove();return;}
+
+  // ── PIN KEYPAD ──
+  var pk=t.closest('[data-pk]');
+  if(pk&&pk.closest('#pinMod')){
+    var key=pk.dataset.pk;
+    if(key==='back'){pinBuffer=pinBuffer.slice(0,-1);}
+    else if(key==='clear'){pinBuffer='';}
+    else if(pinBuffer.length<4){pinBuffer+=key;}
+    updatePinDots();
+    if(pinBuffer.length===4){
+      if(cachedPin&&pinBuffer===cachedPin){closePinModal();if(pinCallback)pinCallback();}
+      else{el('pinErr').textContent='Incorrect PIN — try again';pinShake();pinBuffer='';updatePinDots();}
+    }
+    return;
+  }
+  if(t.closest('#pinCancel')){closePinModal();return;}
+  if(t.closest('#pinSetupSave')){var v=el('pinSetupInp').value.trim();if(!/^\d{4}$/.test(v)){el('pinErr').textContent='Please enter exactly 4 digits';return;}db.ref('settings/recipePin').set(v);cachedPin=v;el('pinSetupInp').value='';closePinModal();if(pinCallback)pinCallback();return;}
 });
 
 var editBillId='';
 el('editBillCancel').addEventListener('click',function(){el('editBillMod').classList.add('h');editBillId='';});
 el('editBillSave').addEventListener('click',function(){if(!editBillId)return;db.ref('bills/'+editBillId).update({name:el('ebName').value.trim(),amount:parseFloat(el('ebAmt').value)||0,freq:el('ebFreq').value,due:el('ebDue').value,cat:el('ebCat').value,notes:el('ebNotes').value.trim()});el('editBillMod').classList.add('h');editBillId='';});
 function openEditBill(bid){var b=bills.find(function(x){return x.id===bid;});if(!b)return;editBillId=bid;el('ebName').value=b.name||'';el('ebAmt').value=b.amount||'';el('ebFreq').value=b.freq||'monthly';el('ebDue').value=b.due||'';el('ebCat').value=b.cat||'other';el('ebNotes').value=b.notes||'';el('editBillMod').classList.remove('h');}
+
+function openPinModal(onSuccess){
+  pinBuffer='';pinCallback=onSuccess;updatePinDots();el('pinErr').textContent='';
+  var hasPin=!!cachedPin;
+  el('pinPad').style.display=hasPin?'grid':'none';
+  el('pinSetupWrap').style.display=hasPin?'none':'block';
+  el('pinModTitle').textContent=hasPin?'🔒 Recipe Locked':'🔒 Set a PIN';
+  el('pinModDesc').textContent=hasPin?'Enter your household PIN to continue':'Create a 4-digit PIN to protect recipes';
+  el('pinMod').classList.remove('h');
+}
+function updatePinDots(){for(var i=0;i<4;i++){var d=el('pd'+i);if(d)d.className='pin-dot2'+(i<pinBuffer.length?' filled':'');}}
+function closePinModal(){el('pinMod').classList.add('h');pinBuffer='';pinCallback=null;el('pinErr').textContent='';}
+function pinShake(){var box=el('pinModBox');box.classList.remove('pin-shake');void box.offsetWidth;box.classList.add('pin-shake');setTimeout(function(){box.classList.remove('pin-shake');},400);}
 
 init();
