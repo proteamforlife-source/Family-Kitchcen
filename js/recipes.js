@@ -30,8 +30,7 @@ function renderRecipes(){
       '</div>'+
       '<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;margin-left:7px;align-items:flex-end">'+
       (userName?'<button class="'+lockClass+'" data-lockr="'+r.id+'" title="'+(locked?'Locked':'Unlocked')+'">'+lockIcon+'</button>':'')+
-      (userName?'<button class="obn obt" data-editr="'+r.id+'" style="font-size:.7rem;padding:3px 7px"'+(locked?' data-blocked="edit"':'')+'>Edit</button>':'')+
-      (isAdmin?'<button class="xbtn" data-delr="'+r.id+'"'+(locked?' data-blocked="delete"':'')+'>🗑</button>':'')+
+(userName?'<button class="obn obt" '+(locked?'data-blocked="edit" data-rid="'+r.id+'"':'data-editr="'+r.id+'"')+' style="font-size:.7rem;padding:3px 7px">Edit</button>':'')+      (isAdmin?'<button class="xbtn" data-delr="'+r.id+'"'+(locked?' data-blocked="delete"':'')+'>🗑</button>':'')+
       '</div></div>'+
       '<div class="rbtns"><button class="obn" data-togr="'+r.id+'">View</button><button class="obn obt" data-cookr="'+r.id+'">Cook</button><button class="obn" data-printr="'+r.id+'" style="border-color:#888;color:#888">Print</button>'+(userName?'<label class="obn obs" style="cursor:pointer">Photo<input type="file" accept="image/*" data-photor="'+r.id+'" style="display:none"></label>':'')+'</div>'+
       '<div class="eform" id="ef-'+r.id+'">'+

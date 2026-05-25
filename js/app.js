@@ -123,8 +123,7 @@ var lockr=t.closest('[data-lockr]');
   var lockt=t.closest('[data-lockt]');
   if(lockt){var ltid=lockt.dataset.lockt;var trec=testRecipes.find(function(r){return r.id===ltid;});if(!trec)return;if(trec.locked){if(!cachedPin){db.ref('recipes/'+ltid+'/locked').set(false);}else{openPinModal(function(){db.ref('recipes/'+ltid+'/locked').set(false);});}}else{db.ref('recipes/'+ltid+'/locked').set(true);}return;}
   var blocked=t.closest('[data-blocked]');
-  if(blocked){var action=blocked.dataset.blocked;openPinModal(function(){if(action==='edit'){var eid=blocked.dataset.editr||blocked.dataset.editt;if(blocked.dataset.editr)el('ef-'+eid).classList.toggle('on');if(blocked.dataset.editt)el('tef-'+eid).classList.toggle('on');}if(action==='delete'){var drid=blocked.dataset.delr;if(!confirm('Remove?'))return;db.ref('recipes/'+drid).remove();}});return;}
-  var sc2 = t.closest('[data-switchchat]'); if (sc2) { openChat(); return; }
+if(action==='edit'){var eid=blocked.dataset.rid||blocked.dataset.editt;if(blocked.dataset.rid)el('ef-'+eid).classList.toggle('on');if(blocked.dataset.editt)el('tef-'+eid).classList.toggle('on');}  var sc2 = t.closest('[data-switchchat]'); if (sc2) { openChat(); return; }
 
   var qd = t.closest('[data-quickdinner]'); if (qd) { var todayIdx2 = new Date().getDay()-1; if (todayIdx2 < 0) todayIdx2 = 6; mealCtx = { wk: dKey(getWeekDates(0)[0]), di: String(todayIdx2), slot: 'D' }; el('mealModTitle').textContent = 'Suggest for Tonight'; el('mealModInp').value = ''; el('mealModUrl').value = ''; el('mealMod').classList.remove('h'); return; }
 
