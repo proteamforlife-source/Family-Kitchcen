@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (editBillCancel) editBillCancel.addEventListener('click', function() {
     el('editBillMod').classList.add('h'); editBillId = '';
   });
+  var plannerModCancel = el('plannerModCancel'); if (plannerModCancel) plannerModCancel.addEventListener('click', function() { el('plannerMod').classList.add('h'); });
 
   var editBillSave = el('editBillSave');
   if (editBillSave) editBillSave.addEventListener('click', function() {
