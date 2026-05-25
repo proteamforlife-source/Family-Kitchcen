@@ -25,7 +25,7 @@ function init() {
       el('userPill').innerHTML = avt(sn, sc, 20) + '<span>' + esc(sn) + '</span>';
       loadPersonal(); buildPresetTags(); buildChatTabs(); listenToConvo('family');
       db.ref('members/'+sn+'/lastSeen').set(Date.now());
-     setTimeout(renderDashboard,400);
+      setTimeout(renderDashboard, 400);
     }
     loadMembers();
   });
@@ -57,14 +57,14 @@ function init() {
 }
 
 function openEditBill(bid) {
-  var b = bills.find(function(x) { return x.id === bid; }); if (!b) return;
+  var b = bills.find(function(x){return x.id===bid;}); if (!b) return;
   editBillId = bid;
-  el('ebName').value = b.name || '';
-  el('ebAmt').value = b.amount || '';
-  el('ebFreq').value = b.freq || 'monthly';
-  el('ebDue').value = b.due || '';
-  el('ebCat').value = b.cat || 'other';
-  el('ebNotes').value = b.notes || '';
+  el('ebName').value = b.name||'';
+  el('ebAmt').value = b.amount||'';
+  el('ebFreq').value = b.freq||'monthly';
+  el('ebDue').value = b.due||'';
+  el('ebCat').value = b.cat||'other';
+  el('ebNotes').value = b.notes||'';
   el('editBillMod').classList.remove('h');
 }
 
@@ -103,79 +103,129 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
-// ── GLOBAL EVENT DELEGATION ──
-document.addEventListener('change', function(e) {
-  var t = e.target;
-  if (t.dataset.dci) { if (!userName) { t.checked = !t.checked; return; } var eid = t.dataset.dev, did = t.dataset.dci, ev = events.find(function(x) { return x.id === eid; }); if (!ev) return; var dishes = ev.dishes ? Object.values(ev.dishes) : [], dish = dishes.find(function(d) { return d.id === did; }); if (!dish) return; if (dish.by && dish.by !== userName) { alert(dish.by + ' is already bringing this!'); t.checked = false; return; } dish.by = dish.by === userName ? '' : userName; db.ref('events/'+eid+'/dishes/'+did+'/by').set(dish.by); return; }
-  if (t.dataset.shid) { if (!userName) return; var item = shopItems.find(function(s) { return s.id === t.dataset.shid; }); if (!item) return; item.done = !item.done; item.by = item.done ? userName : ''; db.ref('shopping/'+t.dataset.shid).update({ done: item.done, by: item.by }); return; }
-  if (t.dataset.todoid) { if (!userName) return; db.ref('personal/'+userName+'/todos/'+t.dataset.todoid+'/done').set(t.checked); setTimeout(renderMyPage, 300); return; }
-  if (t.dataset.photor) { var file = t.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function(ev2) { db.ref('recipes/'+t.dataset.photor+'/photo').set(ev2.target.result); }; reader.readAsDataURL(file); return; }
-});
-
+// ── GLOBAL CLICK HANDLER ──────────────────────────────────────────────────
 document.addEventListener('click', function(e) {
   var t = e.target;
+
   var vi = t.closest('[data-viewimg]'); if (vi) { el('imgModalImg').src = vi.dataset.viewimg; el('imgModal').classList.add('on'); return; }
-var dqa = t.closest('[data-dqa]'); if (dqa) { if (!userName) return; var ans = dqa.dataset.dqa; var ref = db.ref('dinnerQ/'+todayKey()+'/'+userName); ref.once('value', function(s){ if(s.val()===ans){ ref.remove(); } else { ref.set(ans); } setTimeout(renderDashboard,400); }); return; }  var sc2 = t.closest('[data-switchchat]'); if (sc2) { openChat(); return; }
+
+  var dqa = t.closest('[data-dqa]'); if (dqa) { if (!userName) return; var ans = dqa.dataset.dqa; var ref = db.ref('dinnerQ/'+todayKey()+'/'+userName); ref.once('value', function(s){ if(s.val()===ans){ ref.remove(); } else { ref.set(ans); } setTimeout(renderDashboard,400); }); return; }
+
+  var st2 = t.closest('[data-switchtab]'); if (st2 && !t.closest('[data-addmeal]') && !t.closest('[data-quickdinner]')) { switchTab(st2.dataset.switchtab); return; }
+
+  var sc2 = t.closest('[data-switchchat]'); if (sc2) { openChat(); return; }
+
   var qd = t.closest('[data-quickdinner]'); if (qd) { var todayIdx2 = new Date().getDay()-1; if (todayIdx2 < 0) todayIdx2 = 6; mealCtx = { wk: dKey(getWeekDates(0)[0]), di: String(todayIdx2), slot: 'D' }; el('mealModTitle').textContent = 'Suggest for Tonight'; el('mealModInp').value = ''; el('mealModUrl').value = ''; el('mealMod').classList.remove('h'); return; }
-  var uf = t.closest('[data-usefmt]'); if (uf) { try { var parsed = JSON.parse(uf.dataset.usefmt.replace(/&#39;/g, "'")); el('rName').value = parsed.name||''; el('rCat').value = parsed.category||''; el('rServings').value = parsed.servings||''; el('rIngs').value = (parsed.ingredients||[]).join(', '); el('rSteps').value = (parsed.steps||[]).join('\n'); el('fmtResult').innerHTML = ''; el('fmtResult').classList.remove('on'); el('fmtInput').value = ''; switchTab('r'); window.scrollTo(0,0); alert('Recipe loaded!'); } catch(err) {} return; }
+
+  var uf = t.closest('[data-usefmt]'); if (uf) { try { var parsed = JSON.parse(uf.dataset.usefmt.replace(/&#39;/g,"'")); el('rName').value = parsed.name||''; el('rCat').value = parsed.category||''; el('rServings').value = parsed.servings||''; el('rIngs').value = (parsed.ingredients||[]).join(', '); el('rSteps').value = (parsed.steps||[]).join('\n'); el('fmtResult').innerHTML = ''; el('fmtResult').classList.remove('on'); el('fmtInput').value = ''; switchTab('r'); window.scrollTo(0,0); alert('Recipe loaded!'); } catch(err) {} return; }
+
   var preset = t.closest('[data-preset]'); if (preset && preset.closest('#presetTags')) { var pt = preset.dataset.preset, pi2 = selectedPresetTags.indexOf(pt); if (pi2 > -1) selectedPresetTags.splice(pi2,1); else selectedPresetTags.push(pt); buildPresetTags(); return; }
+
   var catBtn = t.closest('[data-cat]'); if (catBtn && catBtn.closest('#catFilter')) { activeCat = catBtn.dataset.cat; buildCatFilter(); renderRecipes(); return; }
+
   var tagBtn = t.closest('[data-tag]'); if (tagBtn && tagBtn.closest('#tagFilter')) { activeTag = tagBtn.dataset.tag; buildTagFilter(); renderRecipes(); return; }
+
   var star = t.closest('.star[data-rid]'); if (star) { if (!userName) return; var srid = star.dataset.rid, sval = parseInt(star.dataset.star); db.ref('recipes/'+srid+'/ratings/'+userName).set({ stars: sval, by: userName }); star.closest('.stars').querySelectorAll('.star').forEach(function(s) { s.classList.toggle('on', parseInt(s.dataset.star) <= sval); }); var allRecs = recipes.concat(testRecipes), rec = allRecs.find(function(r) { return r.id === srid; }); if (rec) { var rats = Object.assign({}, rec.ratings||{}); rats[userName] = { stars: sval, by: userName }; var vals = Object.values(rats).map(function(x) { return x.stars; }), avg = vals.reduce(function(a,b) { return a+b; },0)/vals.length, cnt = vals.length, avgEl = el('avgr-'+srid), cntEl = el('avgc-'+srid); if (avgEl) avgEl.querySelectorAll('.avg-star').forEach(function(s,i) { s.classList.toggle('on', avg >= i+1); }); if (cntEl) cntEl.textContent = avg.toFixed(1)+' ('+cnt+')'; } return; }
+
   var togr = t.closest('[data-togr]'); if (togr) { var rb = el('rb-'+togr.dataset.togr); rb.classList.toggle('on'); togr.textContent = rb.classList.contains('on') ? 'Hide' : 'View'; return; }
   var togtr = t.closest('[data-togtr]'); if (togtr) { var trb = el('trb-'+togtr.dataset.togtr); trb.classList.toggle('on'); togtr.textContent = trb.classList.contains('on') ? 'Hide' : 'View'; return; }
   var togpr = t.closest('[data-togpr]'); if (togpr) { var prb = el('prb-'+togpr.dataset.togpr); prb.classList.toggle('on'); togpr.textContent = prb.classList.contains('on') ? 'Hide' : 'View'; return; }
+
   var editr = t.closest('[data-editr]'); if (editr) { el('ef-'+editr.dataset.editr).classList.toggle('on'); return; }
   var cel = t.closest('[data-canceledit]'); if (cel) { el('ef-'+cel.dataset.canceledit).classList.remove('on'); return; }
-  var saver = t.closest('[data-saver]'); if (saver) { var rid2 = saver.dataset.saver; db.ref('recipes/'+rid2).update({ name: el('en-'+rid2).value.trim(), cat: el('ec-'+rid2).value, tags: el('et-'+rid2).value.split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean), servings: el('esv-'+rid2).value, diff: el('edf-'+rid2).value, ings: el('ei-'+rid2).value.split(',').map(function(s){return s.trim();}).filter(Boolean), steps: el('es-'+rid2).value.trim() }); el('ef-'+rid2).classList.remove('on'); return; }
+  var saver = t.closest('[data-saver]'); if (saver) { var rid2 = saver.dataset.saver; db.ref('recipes/'+rid2).update({ name:el('en-'+rid2).value.trim(), cat:el('ec-'+rid2).value, tags:el('et-'+rid2).value.split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean), servings:el('esv-'+rid2).value, diff:el('edf-'+rid2).value, ings:el('ei-'+rid2).value.split(',').map(function(s){return s.trim();}).filter(Boolean), steps:el('es-'+rid2).value.trim() }); el('ef-'+rid2).classList.remove('on'); return; }
+
   var editt = t.closest('[data-editt]'); if (editt) { el('tef-'+editt.dataset.editt).classList.toggle('on'); return; }
   var cancelt = t.closest('[data-cancelt]'); if (cancelt) { el('tef-'+cancelt.dataset.cancelt).classList.remove('on'); return; }
-  var savet = t.closest('[data-savet]'); if (savet) { var tid = savet.dataset.savet; db.ref('recipes/'+tid).update({ name: el('ten-'+tid).value.trim(), cat: el('tec-'+tid).value, ings: el('tei-'+tid).value.split(',').map(function(s){return s.trim();}).filter(Boolean), steps: el('tes-'+tid).value.trim() }); el('tef-'+tid).classList.remove('on'); return; }
+  var savet = t.closest('[data-savet]'); if (savet) { var tid = savet.dataset.savet; db.ref('recipes/'+tid).update({ name:el('ten-'+tid).value.trim(), cat:el('tec-'+tid).value, ings:el('tei-'+tid).value.split(',').map(function(s){return s.trim();}).filter(Boolean), steps:el('tes-'+tid).value.trim() }); el('tef-'+tid).classList.remove('on'); return; }
+
   var printr = t.closest('[data-printr]'); if (printr) { var pr2 = recipes.find(function(r){return r.id===printr.dataset.printr;})||testRecipes.find(function(r){return r.id===printr.dataset.printr;}); if (pr2) printRecipe(pr2); return; }
+
   var delr = t.closest('[data-delr]'); if (delr) { if (userName !== ADMIN) { alert('Only Mum can delete.'); return; } if (!confirm('Remove?')) return; db.ref('recipes/'+delr.dataset.delr).remove(); return; }
+
   var cookr = t.closest('[data-cookr]'); if (cookr) { var cr = recipes.find(function(r){return r.id===cookr.dataset.cookr;})||testRecipes.find(function(r){return r.id===cookr.dataset.cookr;}); if (cr) startCook(cr); return; }
   var cookpr = t.closest('[data-cookpr]'); if (cookpr) { var myr2 = personalData.myRecipes||{}, pr3 = myr2[cookpr.dataset.cookpr]; if (pr3) startCook(pr3); return; }
-  var addnote = t.closest('[data-addnote]'); if (addnote) { var nrid = addnote.dataset.addnote, ninp = el('ni-'+nrid); if (!ninp||!ninp.value.trim()) return; var nid = 'n'+Date.now(); db.ref('recipes/'+nrid+'/notes/'+nid).set({ id: nid, text: ninp.value.trim(), by: userName||'Family', color: userColor }); ninp.value = ''; return; }
-  var addtnote = t.closest('[data-addtnote]'); if (addtnote) { var tnrid = addtnote.dataset.addtnote, tninp = el('tni-'+tnrid); if (!tninp||!tninp.value.trim()) return; var tnid = 'n'+Date.now(); db.ref('recipes/'+tnrid+'/notes/'+tnid).set({ id: tnid, text: tninp.value.trim(), by: userName||'Family', color: userColor }); tninp.value = ''; return; }
+
+  var addnote = t.closest('[data-addnote]'); if (addnote) { var nrid = addnote.dataset.addnote, ninp = el('ni-'+nrid); if (!ninp||!ninp.value.trim()) return; var nid = 'n'+Date.now(); db.ref('recipes/'+nrid+'/notes/'+nid).set({ id:nid, text:ninp.value.trim(), by:userName||'Family', color:userColor }); ninp.value = ''; return; }
+  var addtnote = t.closest('[data-addtnote]'); if (addtnote) { var tnrid = addtnote.dataset.addtnote, tninp = el('tni-'+tnrid); if (!tninp||!tninp.value.trim()) return; var tnid = 'n'+Date.now(); db.ref('recipes/'+tnrid+'/notes/'+tnid).set({ id:tnid, text:tninp.value.trim(), by:userName||'Family', color:userColor }); tninp.value = ''; return; }
   var delnote = t.closest('[data-delnote]'); if (delnote) { db.ref('recipes/'+delnote.dataset.recid+'/notes/'+delnote.dataset.delnote).remove(); return; }
+
   var approve = t.closest('[data-approve]'); if (approve) { if (userName !== ADMIN) { alert('Only Mum can approve.'); return; } db.ref('recipes/'+approve.dataset.approve+'/testing').set(false); alert('Recipe approved!'); return; }
+
   var delev = t.closest('[data-delev]'); if (delev) { if (userName !== ADMIN) { alert('Only Mum can delete.'); return; } if (!confirm('Remove?')) return; db.ref('events/'+delev.dataset.delev).remove(); return; }
   var deld = t.closest('[data-deld]'); if (deld) { db.ref('events/'+deld.dataset.dev+'/dishes/'+deld.dataset.deld).remove(); return; }
   var dadd = t.closest('[data-dadd]'); if (dadd) { addDish(dadd.dataset.dadd); return; }
   var daci = t.closest('[data-recname]'); if (daci) { var evid2 = daci.dataset.evid, inp2 = el('dacinp-'+evid2); if (inp2) inp2.value = daci.dataset.recname; var dal = el('daclist-'+evid2); if (dal) dal.style.display = 'none'; return; }
+
   var evinvite = t.closest('[data-evinvite]'); if (evinvite) { evInviteId = evinvite.dataset.evinvite; var ev2 = events.find(function(x){return x.id===evInviteId;}); el('evInviteTitle').textContent = 'Invite to '+(ev2?ev2.name:'Event'); el('evInviteSelect').innerHTML = Object.keys(members).filter(function(n){return n!==userName;}).map(function(n){var m=members[n];return'<div class="mem-chip" data-invitemem="'+esc(n)+'">'+avt(n,m.color,18)+'<span>'+esc(n)+'</span></div>';}).join(''); el('evInviteMod').classList.remove('h'); return; }
   var invitemem = t.closest('[data-invitemem]'); if (invitemem && invitemem.closest('#evInviteSelect')) { invitemem.classList.toggle('on'); return; }
+
   var addmeal = t.closest('[data-addmeal]'); if (addmeal) { if (!userName) { alert('Sign in first!'); return; } mealCtx = { wk: addmeal.dataset.wk, di: addmeal.dataset.di, slot: addmeal.dataset.slot }; el('mealModTitle').textContent = 'Suggest for '+DAYS[parseInt(addmeal.dataset.di)]; el('mealModInp').value = ''; el('mealModUrl').value = ''; el('mealMod').classList.remove('h'); setTimeout(function(){el('mealModInp').focus();},80); return; }
+
   var mealrec = t.closest('[data-mealrec]'); if (mealrec) { el('mealModInp').value = mealrec.dataset.mealrec; el('mealSugList').innerHTML = ''; el('mealSugList').style.display = 'none'; return; }
+
   var vote = t.closest('[data-vote]'); if (vote) { if (!userName) return; var vref = db.ref('planner/'+vote.dataset.wk+'/'+vote.dataset.di+'/'+vote.dataset.slot+'/'+vote.dataset.vote+'/votes/'+userName); vref.once('value',function(s){if(s.val())vref.remove();else vref.set(true);setTimeout(function(){if(el('pg-d').classList.contains('on'))renderDashboard();},500);}); return; }
+
   var cook = t.closest('[data-cook]'); if (cook) { if (!userName) return; var cref = db.ref('planner/'+cook.dataset.wk+'/'+cook.dataset.di+'/'+cook.dataset.slot+'/'+cook.dataset.cook+'/cooker'); cref.once('value',function(s){cref.set(s.val()===userName?'':userName);setTimeout(function(){if(el('pg-d').classList.contains('on'))renderDashboard();},500);}); return; }
-  var delmeal = t.closest('[data-delmeal]'); if (delmeal) { db.ref('planner/'+delmeal.dataset.wk+'/'+delmeal.dataset.di+'/'+delmeal.dataset.slot+'/'+delmeal.dataset.delmeal).remove(); return; }
+
+  var delmeal = t.closest('[data-delmeal]'); if (delmeal) { db.ref('planner/'+delmeal.dataset.wk+'/'+delmeal.dataset.di+'/'+delmeal.dataset.slot+'/'+delmeal.dataset.delmeal).remove(); setTimeout(function(){if(el('pg-d').classList.contains('on'))renderDashboard();},400); return; }
+
   var ddadd = t.closest('[data-ddaddmeal]'); if (ddadd) { var slot = ddadd.dataset.ddaddmeal, ddi = ddadd.dataset.di, dwk = ddadd.dataset.wk, inp = el('ddadd-'+slot+'-'+ddi); if (!inp||!inp.value.trim()) return; var mid = 'm'+Date.now(); db.ref('planner/'+dwk+'/'+ddi+'/'+slot+'/'+mid).set({id:mid,name:inp.value.trim(),votes:{},cooker:'',by:userName}); inp.value=''; setTimeout(function(){refreshDayDetail(parseInt(ddi),dwk,'');},400); return; }
+
   var clickday = t.closest('[data-dk]'); if (clickday && clickday.dataset.di !== undefined && !t.closest('[data-addmeal]') && !t.closest('[data-vote]') && !t.closest('[data-cook]') && !t.closest('[data-delmeal]') && !t.closest('a') && !t.closest('[data-plannerview]')) { var cdi = parseInt(clickday.dataset.di), cwk = clickday.dataset.wk, cdk = clickday.dataset.dk; if (cwk) db.ref('planner/'+cwk+'/'+cdi).once('value',function(snap){openDayDetail(cdi,cwk,cdk,snap.val()||{});}); return; }
+
   var convBtn = t.closest('[data-conv]'); if (convBtn && convBtn.closest('#chatTabs')) { switchConvo(convBtn.dataset.conv, convBtn.dataset.cname, convBtn.dataset.gid||''); return; }
+
   var addmembers = t.closest('[data-addmembers]'); if (addmembers) { openAddMembers(addmembers.dataset.addmembers); return; }
   var gmem = t.closest('[data-gmem]'); if (gmem && gmem.closest('#groupMemSelect')) { var gn = gmem.dataset.gmem, gi = groupSelectedMembers.indexOf(gn); if (gi > -1) groupSelectedMembers.splice(gi,1); else groupSelectedMembers.push(gn); buildGroupMemSelect(); return; }
   var addmem = t.closest('[data-addmem]'); if (addmem && addmem.closest('#addMembersSelect')) { var an = addmem.dataset.addmem, ai = addMembersSelected.indexOf(an); if (ai > -1) addMembersSelected.splice(ai,1); else addMembersSelected.push(an); buildAddMembersSelect(); return; }
+
   var pickcolor = t.closest('[data-pickcolor]'); if (pickcolor) { var nc = pickcolor.dataset.pickcolor; userColor = nc; localStorage.setItem('fk_color',nc); db.ref('members/'+userName+'/color').set(nc); el('userPill').innerHTML = avt(userName,nc,20)+'<span>'+esc(userName)+'</span>'; el('settingsMod').classList.add('h'); el('settingsBtn').click(); return; }
+
   var mypv = t.closest('[data-mypageview]'); if (mypv) { myPageView = mypv.dataset.mypageview; weekOffset = 0; monthOffset = 0; renderMyPage(); return; }
+
   var deltodo = t.closest('[data-deltodo]'); if (deltodo) { db.ref('personal/'+userName+'/todos/'+deltodo.dataset.deltodo).remove(); setTimeout(renderMyPage,300); return; }
+
   var dsh = t.closest('[data-dsh]'); if (dsh) { if (userName !== ADMIN) return; db.ref('shopping/'+dsh.dataset.dsh).remove(); return; }
+
   var addd = t.closest('[data-addd]'); if (addd) { dayCtx = { dk: addd.dataset.addd }; el('dayModTitle').textContent = 'Add to '+addd.dataset.addd; el('dayModInp').value = ''; el('dayModType').value = 'B'; el('dayMod').classList.remove('h'); setTimeout(function(){el('dayModInp').focus();},80); return; }
   var dday = t.closest('[data-dday]'); if (dday) { db.ref('personal/'+userName+'/days/'+dday.dataset.dk+'/items/'+dday.dataset.dday).remove(); return; }
+
   var addpr = t.closest('[data-addpr]'); if (addpr) { var pn = el('prName').value.trim(); if (!pn) { alert('Enter a name.'); return; } var prec = { id:'pr'+Date.now(), name:pn, cat:el('prCat').value||'General', tags:el('prTags').value.split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean), by:userName||'Me', ings:el('prIngs').value.split(',').map(function(s){return s.trim();}).filter(Boolean), steps:el('prSteps').value.trim() }; db.ref('personal/'+userName+'/myRecipes/'+prec.id).set(prec); ['prName','prTags','prIngs','prSteps'].forEach(function(i){el(i).value='';}); return; }
   var editpr = t.closest('[data-editpr]'); if (editpr) { el('pef-'+editpr.dataset.editpr).classList.toggle('on'); return; }
   var cancelpr = t.closest('[data-cancelpr]'); if (cancelpr) { el('pef-'+cancelpr.dataset.cancelpr).classList.remove('on'); return; }
   var savepr = t.closest('[data-savepr]'); if (savepr) { var pid = savepr.dataset.savepr; db.ref('personal/'+userName+'/myRecipes/'+pid).update({ name:el('pen-'+pid).value.trim(), cat:el('pec-'+pid).value||'General', tags:el('pet-'+pid).value.split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean), ings:el('pei-'+pid).value.split(',').map(function(s){return s.trim();}).filter(Boolean), steps:el('pes-'+pid).value.trim() }); el('pef-'+pid).classList.remove('on'); return; }
   var shrpr = t.closest('[data-shrpr]'); if (shrpr) { var myr3 = personalData.myRecipes||{}, sr = myr3[shrpr.dataset.shrpr]; if (!sr) return; db.ref('recipes/'+sr.id).set(Object.assign({},sr,{by:userName,notes:{},ratings:{},testing:false})); alert('"'+sr.name+'" shared!'); return; }
   var delpr = t.closest('[data-delpr]'); if (delpr) { if (!confirm('Remove?')) return; db.ref('personal/'+userName+'/myRecipes/'+delpr.dataset.delpr).remove(); return; }
+
   var ptt = t.closest('[data-pushtotesting]'); if (ptt) { var mname = ptt.dataset.mname; if (!mname) return; var rec = { id:'r'+Date.now(), name:mname, cat:'Other', ings:[], steps:'', by:userName||'Family', notes:{}, ratings:{}, photo:'', testing:true, tags:[] }; db.ref('recipes/'+rec.id).set(rec); alert('"'+mname+'" added to Testing!'); return; }
-  var planview = t.closest('[data-plannerview]'); if (planview) { plannerView = planview.dataset.plannerview; if (plannerView === 'month') { planMonthOffset = 0; } else { planOffset = 0; } setupPlannerListener(); renderPlanner(); return; }
+
+  var addtoplanner = t.closest('[data-addtoplanner]'); if (addtoplanner) { if (!userName) return; var mname = addtoplanner.dataset.mname; var todayIdx3 = new Date().getDay()-1; if (todayIdx3 < 0) todayIdx3 = 6; mealCtx = { wk: dKey(getWeekDates(0)[0]), di: String(todayIdx3), slot: 'D' }; el('mealModTitle').textContent = 'Add "' + mname + '" to Planner'; el('mealModInp').value = mname; el('mealModUrl').value = ''; el('mealMod').classList.remove('h'); return; }
+
+  var suggesttonight = t.closest('[data-suggesttonight]'); if (suggesttonight) { if (!userName) return; var mname = suggesttonight.dataset.mname; var tidx = new Date().getDay()-1; if (tidx < 0) tidx = 6; var wkKey = dKey(getWeekDates(0)[0]); var mid = 'm'+Date.now(); db.ref('planner/'+wkKey+'/'+tidx+'/D/'+mid).set({id:mid,name:mname,votes:{},cooker:'',by:userName}); alert('"'+mname+'" added to tonight!'); return; }
+
   var editbill = t.closest('[data-editbill]'); if (editbill) { openEditBill(editbill.dataset.editbill); return; }
+
   var paybill = t.closest('[data-paybill]'); if (paybill) { if (!userName) return; var bid = paybill.dataset.paybill, b = bills.find(function(x){return x.id===bid;}); if (!b) return; var nextDue = ''; if (b.freq && b.freq !== 'once') { var d = new Date(b.due+'T00:00:00'); if (b.freq==='weekly') d.setDate(d.getDate()+7); else if (b.freq==='fortnightly') d.setDate(d.getDate()+14); else if (b.freq==='monthly') d.setMonth(d.getMonth()+1); else if (b.freq==='quarterly') d.setMonth(d.getMonth()+3); else if (b.freq==='annual') d.setFullYear(d.getFullYear()+1); nextDue = d.toISOString().split('T')[0]; } db.ref('bills/'+bid).update({paid:true,paidDate:todayKey(),paidBy:userName}); if (nextDue) { var newId = 'bi'+Date.now(); db.ref('bills/'+newId).set(Object.assign({},b,{id:newId,paid:false,paidDate:'',paidBy:'',due:nextDue})); } return; }
+
   var unpaybill = t.closest('[data-unpaybill]'); if (unpaybill) { db.ref('bills/'+unpaybill.dataset.unpaybill).update({paid:false,paidDate:'',paidBy:''}); return; }
+
   var caledit = t.closest('[data-caledit]'); if (caledit) { openCalEdit(caledit.dataset.caledit); return; }
   var caldel = t.closest('[data-caldel]'); if (caldel) { if (!confirm('Remove this?')) return; db.ref('calendarEvents/'+caldel.dataset.caldel).remove(); setTimeout(renderCalendar,300); return; }
+
   var delbill = t.closest('[data-delbill]'); if (delbill) { if (userName !== ADMIN) return; if (!confirm('Remove this bill?')) return; db.ref('bills/'+delbill.dataset.delbill).remove(); return; }
+
+  var planview = t.closest('[data-plannerview]'); if (planview) { plannerView = planview.dataset.plannerview; if (plannerView === 'month') { planMonthOffset = 0; } else { planOffset = 0; } setupPlannerListener(); renderPlanner(); return; }
+
+});
+
+// ── GLOBAL CHANGE HANDLER ─────────────────────────────────────────────────
+document.addEventListener('change', function(e) {
+  var t = e.target;
+  if (t.dataset.dci) { if (!userName) { t.checked = !t.checked; return; } var eid = t.dataset.dev, did = t.dataset.dci, ev = events.find(function(x){return x.id===eid;}); if (!ev) return; var dishes = ev.dishes?Object.values(ev.dishes):[], dish = dishes.find(function(d){return d.id===did;}); if (!dish) return; if (dish.by && dish.by !== userName) { alert(dish.by+' is already bringing this!'); t.checked = false; return; } dish.by = dish.by===userName?'':userName; db.ref('events/'+eid+'/dishes/'+did+'/by').set(dish.by); return; }
+  if (t.dataset.shid) { if (!userName) return; var item = shopItems.find(function(s){return s.id===t.dataset.shid;}); if (!item) return; item.done = !item.done; item.by = item.done?userName:''; db.ref('shopping/'+t.dataset.shid).update({done:item.done,by:item.by}); return; }
+  if (t.dataset.todoid) { if (!userName) return; db.ref('personal/'+userName+'/todos/'+t.dataset.todoid+'/done').set(t.checked); setTimeout(renderMyPage,300); return; }
+  if (t.dataset.photor) { var file = t.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function(ev2){db.ref('recipes/'+t.dataset.photor+'/photo').set(ev2.target.result);}; reader.readAsDataURL(file); return; }
 });
 
 init();
