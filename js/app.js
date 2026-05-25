@@ -234,8 +234,7 @@ var saver=t.closest('[data-saver]');if(saver){var rid2=saver.dataset.saver;attem
     else if(pinBuffer.length<4){pinBuffer+=key;}
     updatePinDots();
     if(pinBuffer.length===4){
-      if(cachedPin&&pinBuffer===cachedPin){closePinModal();if(pinCallback)pinCallback();}
-      else{el('pinErr').textContent='Incorrect PIN — try again';pinShake();pinBuffer='';updatePinDots();}
+if(cachedPin&&pinBuffer===cachedPin){var cb=pinCallback;closePinModal();if(cb)cb();}      else{el('pinErr').textContent='Incorrect PIN — try again';pinShake();pinBuffer='';updatePinDots();}
     }
     return;
   }
