@@ -1,4 +1,5 @@
-// ─── PLANNER.JS ────────────────────────────────────────────────────────────
+// ─── PLANNER.JS ─────────────────────────────────────────────────────────────
+// v2.1 — unified listener architecture (week/day/month)
 var mealCtx = {};
 var plannerMonthRefs = [];
 var plannerDetailCtx = {}; // tracks currently open dayDetailMod context
