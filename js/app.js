@@ -33,6 +33,8 @@ if(el('pg-d').classList.contains('on')&&userName)renderDashboard();
   db.ref('shopping').on('value',function(snap){shopItems=[];snap.forEach(function(c){shopItems.push(c.val());});renderShopping();});
   db.ref('bills').on('value',function(snap){bills=[];snap.forEach(function(c){bills.push(c.val());});renderBills();if(el('pg-d').classList.contains('on')&&userName)renderDashboard();});
   db.ref('calendarEvents').on('value',function(snap){calEvents=[];snap.forEach(function(c){calEvents.push(c.val());});if(el('pg-c')&&el('pg-c').classList.contains('on'))renderCalendar();});
+  db.ref('dinnerQ/'+todayKey()).on('value',function(){if(el('pg-d').classList.contains('on')&&userName)renderDashboard();});
+  db.ref('planner/'+dKey(getWeekDates(0)[0])+'/'+((new Date().getDay()||7)-1)+'/D').on('value',function(){if(el('pg-d').classList.contains('on')&&userName)renderDashboard();});
 }
 
 document.addEventListener('DOMContentLoaded',function(){
