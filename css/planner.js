@@ -8,7 +8,8 @@ function saveMealSug() {
   var url = el('mealModUrl').value.trim();
   var id = 'm' + Date.now();
   var meal = { id: id, name: v, votes: {}, cooker: '', by: userName };
-  if (url) meal.url = url;   
+  if (url) meal.url = url;
+  if (mealCtx.recipeId) { meal.recipeId = mealCtx.recipeId; meal.recipeType = mealCtx.recipeType; }
   db.ref('planner/' + mealCtx.wk + '/' + mealCtx.di + '/' + mealCtx.slot + '/' + id).set(meal);
   el('mealMod').classList.add('h');
   el('mealModInp').value = '';
