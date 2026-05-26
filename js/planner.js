@@ -15,8 +15,8 @@ function saveMealSug() {
   el('mealModInp').value = '';
   el('mealModUrl').value = '';
   el('mealSugList').innerHTML = '';
-  // If triggered from day detail modal, refresh it to show the new meal
-  if (mealCtx.fromDetail) { refreshDayDetail(parseInt(mealCtx.di), mealCtx.wk, ''); }
+  // If triggered from day detail modal, reopen and refresh it
+  if (mealCtx.fromDetail) { el('dayDetailMod').classList.remove('h'); refreshDayDetail(parseInt(mealCtx.di), mealCtx.wk, ''); }
 }
 
 function setupPlannerListener() {
@@ -201,6 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var mealModCancel = el('mealModCancel');
   if (mealModCancel) mealModCancel.addEventListener('click', function () {
     el('mealMod').classList.add('h');
+    if (mealCtx.fromDetail) { el('dayDetailMod').classList.remove('h'); }
   });
 
   var mealModSave = el('mealModSave');
