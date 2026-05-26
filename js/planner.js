@@ -29,19 +29,31 @@ function setupPlannerListener() {
   if (plannerMonthRefs) { plannerMonthRefs.forEach(function(r){ r.off(); }); plannerMonthRefs = []; }
 
   if (plannerView === 'month') {
-    // Build listener on the top-level planner node — fires on any planner write
-    plannerRef = db.ref('planner');
-    plannerRef.on('value', function() {
-      renderPlannerMonth();
-      // If dayDetailMod is open, refresh it too
-      if (!el('dayDetailMod').classList.contains('h') && plannerDetailCtx.wk) {
-        refreshDayDetail(plannerDetailCtx.di, plannerDetailCtx.wk, plannerDetailCtx.dk);
-      }
+    // Month: listen to each visible week individually — avoids root listener loop
+    var mdata = getMonthDates(planMonthOffset);
+    var uniqueWks = [];
+    mdata.days.forEach(function(d) {
+      var monday = new Date(d), dow = monday.getDay() || 7;
+      monday.setDate(monday.getDate() - dow + 1);
+      var wkKey = dKey(monday);
+      if (uniqueWks.indexOf(wkKey) < 0) uniqueWks.push(wkKey);
+    });
+    uniqueWks.forEach(function(wkKey) {
+      var ref = db.ref('planner/' + wkKey);
+      ref.on('value', function() {
+        renderPlannerMonth();
+        if (!el('dayDetailMod').classList.contains('h') && plannerDetailCtx.wk) {
+          refreshDayDetail(plannerDetailCtx.di, plannerDetailCtx.wk, plannerDetailCtx.dk);
+        }
+      });
+      plannerMonthRefs.push(ref);
     });
     return;
   }
 
-  var dates = getWeekDates(planOffset), wk = dKey(dates[0]);
+  // planOffset = day offset in day view, week offset in week view
+  var wkOff = (plannerView === 'day') ? Math.floor(planOffset / 7) : planOffset;
+  var dates = getWeekDates(wkOff), wk = dKey(dates[0]);
   plannerRef = db.ref('planner/' + wk);
   plannerRef.on('value', function (snap) {
     var wkData = snap.val() || {};
