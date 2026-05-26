@@ -16,7 +16,7 @@ function attemptProtectedAction(recipeId,action){
 function switchTab(id){
   tabs.forEach(function(t){el('pg-'+t).classList.remove('on');el('tb-'+t).classList.remove('on');});
   el('pg-'+id).classList.add('on');el('tb-'+id).classList.add('on');
-  if(id==='p'){setupPlannerListener();}
+  if(id==='p'){el('planGrid').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">Loading...</div>';setupPlannerListener();}
   if(id==='d')renderDashboard();
   if(id==='c')renderCalendar();
 }

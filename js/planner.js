@@ -23,11 +23,14 @@ function saveMealSug() {
 function setupPlannerListener() {
   if (plannerView === 'month') {
     if (plannerRef) plannerRef.off();
+    renderPlannerMonth();
     return;
   }
   var dates = getWeekDates(planOffset), wk = dKey(dates[0]);
   if (plannerRef) plannerRef.off();
   plannerRef = db.ref('planner/' + wk);
+  // If cache already has data for this week, render immediately then let .on() keep it fresh
+  if (plannerWeekCache[wk]) { renderPlanner(); }
   plannerRef.on('value', function (snap) {
     plannerWeekCache[wk] = snap.val() || {};
     renderPlanner();
