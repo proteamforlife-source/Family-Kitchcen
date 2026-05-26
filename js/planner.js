@@ -1,5 +1,5 @@
 // ─── PLANNER.JS ─────────────────────────────────────────────────────────────
-// v2.1 — unified listener architecture (week/day/month)
+// v2.2 — unified listener architecture (week/day/month) — B/L/D pills
 var mealCtx = {};
 var plannerMonthRefs = [];
 var plannerMonthCache = {}; // persistent week data cache for month view
@@ -205,13 +205,19 @@ function renderMonthGrid(mdata, firstDay, today, allData) {
       meals.forEach(function(m) { var vc = m.votes ? Object.keys(m.votes).length : 0; if (vc > maxV) { maxV = vc; top = m; } });
       return top;
     }
+    var slotStyles = {
+      B: 'background:#E9E1D6;color:#7F8A73;',
+      L: 'background:#DCCBB6;color:#A08F7A;',
+      D: 'background:#E07A5F;color:#fff;'
+    };
     function slotRow(label, meals) {
       var top = topMeal(meals);
       var name = top ? esc(top.name) : '—';
-      var color = top ? 'var(--charcoal)' : 'var(--border)';
-      return '<div style="display:flex;gap:3px;align-items:baseline;line-height:1.3">' +
-        '<span style="font-size:.5rem;font-weight:700;color:var(--muted);min-width:7px;flex-shrink:0">' + label + '</span>' +
-        '<span style="font-size:.56rem;color:' + color + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</span>' +
+      var nameColor = top ? 'var(--charcoal)' : 'var(--border)';
+      var pill = '<span style="' + slotStyles[label] + 'font-size:.45rem;font-weight:700;padding:1px 3px;border-radius:3px;flex-shrink:0;line-height:1.4">' + label + '</span>';
+      return '<div style="display:flex;gap:3px;align-items:center;line-height:1.3;margin-bottom:1px">' +
+        pill +
+        '<span style="font-size:.54rem;color:' + nameColor + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</span>' +
         '</div>';
     }
     var persItems = (personalData && personalData.days && personalData.days[dk] && personalData.days[dk].items) ? Object.values(personalData.days[dk].items) : [];
