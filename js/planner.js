@@ -1,5 +1,7 @@
 // ─── PLANNER.JS ────────────────────────────────────────────────────────────
 var mealCtx = {};
+var plannerMonthRefs = [];
+var plannerDetailCtx = {}; // tracks currently open dayDetailMod context
 
 function saveMealSug() {
   if (!userName) { alert('Sign in first!'); return; }
@@ -21,12 +23,24 @@ function saveMealSug() {
 }
 
 function setupPlannerListener() {
+  // Clear any existing listeners
+  if (plannerRef) { plannerRef.off(); plannerRef = null; }
+  if (plannerMonthRefs) { plannerMonthRefs.forEach(function(r){ r.off(); }); plannerMonthRefs = []; }
+
   if (plannerView === 'month') {
-    if (plannerRef) plannerRef.off();
+    // Build listener on the top-level planner node — fires on any planner write
+    plannerRef = db.ref('planner');
+    plannerRef.on('value', function() {
+      renderPlannerMonth();
+      // If dayDetailMod is open, refresh it too
+      if (!el('dayDetailMod').classList.contains('h') && plannerDetailCtx.wk) {
+        refreshDayDetail(plannerDetailCtx.di, plannerDetailCtx.wk, plannerDetailCtx.dk);
+      }
+    });
     return;
   }
+
   var dates = getWeekDates(planOffset), wk = dKey(dates[0]);
-  if (plannerRef) plannerRef.off();
   plannerRef = db.ref('planner/' + wk);
   plannerRef.on('value', function (snap) {
     var wkData = snap.val() || {};
@@ -190,6 +204,7 @@ function openDayDetail(di, wk, dk, dayData) {
       setTimeout(function () { refreshDayDetail(parseInt(sel.dataset.di), sel.dataset.wk, ''); }, 400);
     });
   });
+  plannerDetailCtx = { di: di, wk: wk, dk: dk };
   el('dayDetailMod').classList.remove('h');
 }
 
@@ -244,6 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var dayDetailClose = el('dayDetailClose');
   if (dayDetailClose) dayDetailClose.addEventListener('click', function () {
     el('dayDetailMod').classList.add('h');
+    plannerDetailCtx = {};
   });
 
 });
