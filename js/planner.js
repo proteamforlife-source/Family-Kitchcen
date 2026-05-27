@@ -104,7 +104,7 @@ function renderPlanner(weekData) {
           var vc = m.votes ? Object.keys(m.votes).length : 0;
           var myV = m.votes && m.votes[userName];
           var isW = m.id === winner && maxV > 0;
-          return '<div class="msug' + (isW ? ' winner' : '') + '"><div class="msug-name">' + esc(m.name) + (m.url ? '<a href="' + esc(m.url) + '" target="_blank" style="margin-left:3px;font-size:.55rem;color:var(--bl)">link</a>' : '') + '</div><div class="mvotes"><button class="vbtn' + (myV ? ' voted' : '') + '" data-vote="' + m.id + '" data-wk="' + wk + '" data-di="' + i + '" data-slot="' + sk + '">+' + vc + '</button><button class="cclaim' + (m.cooker ? ' claimed' : '') + '" data-cook="' + m.id + '" data-wk="' + wk + '" data-di="' + i + '" data-slot="' + sk + '">' + (m.cooker ? esc(m.cooker.charAt(0)) : 'Cook?') + '</button><button class="xbtn" style="font-size:.58rem" data-delmeal="' + m.id + '" data-wk="' + wk + '" data-di="' + i + '" data-slot="' + sk + '">x</button>' + (m.recipeId ? '<button class="sm sx" style="font-size:.55rem;padding:2px 6px" data-cookr="' + m.recipeId + '">▶ Recipe</button>' : '') + '</div></div>';
+          return '<div class="msug' + (isW ? ' winner' : '') + '"><div class="msug-name">' + esc(m.name) + (m.url ? '<a href="' + esc(m.url) + '" target="_blank" style="margin-left:3px;font-size:.55rem;color:var(--bl)">link</a>' : '') + '</div><div class="mvotes"><button class="vbtn' + (myV ? ' voted' : '') + '" data-vote="' + m.id + '" data-wk="' + wk + '" data-di="' + i + '" data-slot="' + sk + '">+' + vc + '</button><button class="cclaim' + (m.cooker ? ' claimed' : '') + '" data-cook="' + m.id + '" data-wk="' + wk + '" data-di="' + i + '" data-slot="' + sk + '">' + (m.cooker ? esc(m.cooker.charAt(0)) : 'Cook?') + '</button><button class="xbtn" style="font-size:.58rem" data-delmeal="' + m.id + '" data-wk="' + wk + '" data-di="' + i + '" data-slot="' + sk + '">x</button>' + (m.recipeId ? '<button class="sm sx" style="font-size:.7rem;padding:2px 6px;line-height:1" data-cookr="' + m.recipeId + '"><i class=\"ti ti-tools-kitchen-2\" style=\"font-size:12px\"></i></button>' : '') + '</div></div>';
         }).join('') + '<button class="add-meal-btn" data-addmeal="1" data-wk="' + wk + '" data-di="' + i + '" data-slot="' + sk + '">+ suggest</button></div>';
       }
       return '<div class="plan-day' + (isT ? ' tod' : '') + '" data-di="' + i + '" data-wk="' + wk + '" data-dk="' + dk + '"><h4>' + DAYS[i] + '</h4><div class="plan-date">' + d.getDate() + '/' + (d.getMonth() + 1) + '</div>' + persHtml + slotHtml('B', 'B') + slotHtml('L', 'L') + slotHtml('D', 'D') + '</div>';
@@ -142,7 +142,7 @@ function renderPlannerDay(dayData) {
         return '<div class="msug' + (isW ? ' winner' : '') + '" style="padding:8px 10px;margin-bottom:6px"><div class="msug-name" style="font-size:.88rem">' + esc(m.name) + (m.url ? '<a href="' + esc(m.url) + '" target="_blank" style="margin-left:5px;font-size:.75rem;color:var(--bl)">link</a>' : '') + '</div>' +
           '<div class="mvotes" style="margin-top:5px"><button class="vbtn' + (myV ? ' voted' : '') + '" data-vote="' + m.id + '" data-wk="' + wkKey + '" data-di="' + dayIdx + '" data-slot="' + sk + '">+' + vc + '</button>' +
           '<button class="cclaim' + (m.cooker ? ' claimed' : '') + '" data-cook="' + m.id + '" data-wk="' + wkKey + '" data-di="' + dayIdx + '" data-slot="' + sk + '">' + (m.cooker ? esc(m.cooker) : 'Who is cooking?') + '</button>' +
-          '<button class="xbtn" data-delmeal="' + m.id + '" data-wk="' + wkKey + '" data-di="' + dayIdx + '" data-slot="' + sk + '">x</button>' + (m.recipeId ? '<button class="sm sx" style="font-size:.55rem;padding:2px 6px" data-cookr="' + m.recipeId + '">▶ Recipe</button>' : '') + '</div></div>';
+          '<button class="xbtn" data-delmeal="' + m.id + '" data-wk="' + wkKey + '" data-di="' + dayIdx + '" data-slot="' + sk + '">x</button>' + (m.recipeId ? '<button class="sm sx" style="font-size:.7rem;padding:2px 6px;line-height:1" data-cookr="' + m.recipeId + '"><i class=\"ti ti-tools-kitchen-2\" style=\"font-size:12px\"></i></button>' : '') + '</div></div>';
       }).join('') +
         '<button class="add-meal-btn" style="padding:6px;font-size:.78rem" data-addmeal="1" data-wk="' + wkKey + '" data-di="' + dayIdx + '" data-slot="' + sk + '">+ suggest</button></div>';
     }
@@ -305,8 +305,14 @@ document.addEventListener('DOMContentLoaded', function () {
           prev.scrollIntoView({ block: 'nearest' });
         }
       } else if (e.key === 'Enter') {
-        if (active) { active.click(); }
-        else { saveMealSug(); }
+        e.preventDefault();
+        if (active) {
+          active.click();
+          // After selection, save immediately
+          setTimeout(function() { saveMealSug(); }, 50);
+        } else {
+          saveMealSug();
+        }
       }
     });
     mealModInp.addEventListener('input', function () {
