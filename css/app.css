@@ -128,6 +128,8 @@ main{max-width:720px;margin:0 auto;padding:14px 12px}
 .plan-slot-lbl{font-size:.56rem;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:1px;margin-top:3px}
 .msug{background:var(--cream);border-radius:5px;padding:3px 5px;margin-bottom:2px;font-size:.62rem;border:1px solid var(--border)}
 .msug.winner{background:#eaf3ea;border-color:var(--sage)}
+.ac-active{background:var(--oat) !important;outline:2px solid var(--terra);}
+#mealSugList{max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:8px;}
 .msug-name{font-weight:600;color:var(--charcoal);margin-bottom:1px;word-break:break-word}
 .mvotes{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
 .vbtn{background:none;border:1px solid var(--border);border-radius:4px;padding:1px 4px;font-size:.58rem;cursor:pointer;color:var(--muted)}
