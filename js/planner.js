@@ -332,4 +332,10 @@ document.addEventListener('DOMContentLoaded', function () {
     plannerDetailCtx = {};
   });
 
+  var dayDetailDone = el('dayDetailDone');
+  if (dayDetailDone) dayDetailDone.addEventListener('click', function () {
+    el('dayDetailMod').classList.add('h');
+    plannerDetailCtx = {};
+  });
+
 });
