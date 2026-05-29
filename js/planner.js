@@ -338,4 +338,11 @@ document.addEventListener('DOMContentLoaded', function () {
     plannerDetailCtx = {};
   });
 
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !el('dayDetailMod').classList.contains('h') && el('mealMod').classList.contains('h') && el('mealModInp') !== document.activeElement) {
+      el('dayDetailMod').classList.add('h');
+      plannerDetailCtx = {};
+    }
+  });
+
 });
