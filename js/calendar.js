@@ -273,60 +273,61 @@ function openCalEdit(id) {
 }
 
 // ─── ALL LISTENERS ─────────────────────────────────────────────────────────
+
+// ── Nav delegation — single handler, no stacking ──
+document.addEventListener('click', function(e) {
+  var t = e.target;
+
+  // Prev / Next / Today — matched by ID on dynamically rendered buttons
+  if (t.id === 'calPrevNav') { calOffset--; renderCalendar(); return; }
+  if (t.id === 'calNextNav') { calOffset++; renderCalendar(); return; }
+  if (t.id === 'calTodayBtn') { calOffset = 0; renderCalendar(); return; }
+  if (t.id === 'calLabelInner' && calView === 'month') { openMonthJump(); return; }
+  if (t.id === 'calJumpClose') { el('calMonthJumpModal').remove(); return; }
+
+  // Month jump modal — pick a month
+  var jumpBtn = t.closest('[data-jumpval]');
+  if (jumpBtn && el('calMonthJumpModal')) {
+    calOffset = parseInt(jumpBtn.dataset.jumpval);
+    el('calMonthJumpModal').remove();
+    renderCalendar(); return;
+  }
+
+  // Tap outside modal to close
+  if (t.id === 'calMonthJumpModal') { t.remove(); return; }
+
+  // View toggle
+  var cv = t.closest('[data-calview]');
+  if (cv && el('pg-c') && el('pg-c').classList.contains('on')) {
+    calView = cv.dataset.calview;
+    calOffset = 0;
+    ['month','week','day'].forEach(function(v) { var b = el('cv-'+v); if (b) b.className = 'cal-type-btn'+(calView===v?' on':''); });
+    renderCalendar(); return;
+  }
+
+  // Tap day in month → day view
+  var caldk = t.closest('[data-caldk]');
+  if (caldk && el('pg-c') && el('pg-c').classList.contains('on')) {
+    calView = 'day';
+    var clicked = new Date(caldk.dataset.caldk + 'T00:00:00');
+    var today = new Date(); today.setHours(0,0,0,0);
+    calOffset = Math.round((clicked - today) / 86400000);
+    ['month','week','day'].forEach(function(v) { var b = el('cv-'+v); if (b) b.className = 'cal-type-btn'+(calView===v?' on':''); });
+    renderCalendar(); return;
+  }
+
+  // Edit / delete calendar event
+  var caledit = t.closest('[data-caledit]');
+  if (caledit) { openCalEdit(caledit.dataset.caledit); return; }
+  var caldel = t.closest('[data-caldel]');
+  if (caldel) {
+    if (!confirm('Delete this event?')) return;
+    db.ref('calendarEvents/' + caldel.dataset.caldel).remove();
+    setTimeout(renderCalendar, 400); return;
+  }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
-
-  // ── Nav delegation — single handler, no stacking ──
-  document.addEventListener('click', function(e) {
-    var t = e.target;
-
-    // Prev / Next / Today — matched by ID on dynamically rendered buttons
-    if (t.id === 'calPrevNav') { calOffset--; renderCalendar(); return; }
-    if (t.id === 'calNextNav') { calOffset++; renderCalendar(); return; }
-    if (t.id === 'calTodayBtn') { calOffset = 0; renderCalendar(); return; }
-    if (t.id === 'calLabelInner' && calView === 'month') { openMonthJump(); return; }
-    if (t.id === 'calJumpClose') { el('calMonthJumpModal').remove(); return; }
-
-    // Month jump modal — pick a month
-    var jumpBtn = t.closest('[data-jumpval]');
-    if (jumpBtn && el('calMonthJumpModal')) {
-      calOffset = parseInt(jumpBtn.dataset.jumpval);
-      el('calMonthJumpModal').remove();
-      renderCalendar(); return;
-    }
-
-    // Tap outside modal to close
-    if (t.id === 'calMonthJumpModal') { t.remove(); return; }
-
-    // View toggle
-    var cv = t.closest('[data-calview]');
-    if (cv && el('pg-c') && el('pg-c').classList.contains('on')) {
-      calView = cv.dataset.calview;
-      calOffset = 0;
-      ['month','week','day'].forEach(function(v) { var b = el('cv-'+v); if (b) b.className = 'cal-type-btn'+(calView===v?' on':''); });
-      renderCalendar(); return;
-    }
-
-    // Tap day in month → day view
-    var caldk = t.closest('[data-caldk]');
-    if (caldk && el('pg-c') && el('pg-c').classList.contains('on')) {
-      calView = 'day';
-      var clicked = new Date(caldk.dataset.caldk + 'T00:00:00');
-      var today = new Date(); today.setHours(0,0,0,0);
-      calOffset = Math.round((clicked - today) / 86400000);
-      ['month','week','day'].forEach(function(v) { var b = el('cv-'+v); if (b) b.className = 'cal-type-btn'+(calView===v?' on':''); });
-      renderCalendar(); return;
-    }
-
-    // Edit / delete calendar event
-    var caledit = t.closest('[data-caledit]');
-    if (caledit) { openCalEdit(caledit.dataset.caledit); return; }
-    var caldel = t.closest('[data-caldel]');
-    if (caldel) {
-      if (!confirm('Delete this event?')) return;
-      db.ref('calendarEvents/' + caldel.dataset.caldel).remove();
-      setTimeout(renderCalendar, 400); return;
-    }
-  });
 
   // ── Add to Calendar modal ──
   var calAddBtn = el('calAddBtn');

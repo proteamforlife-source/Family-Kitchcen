@@ -48,9 +48,6 @@ function renderMyPage(){
   el('todoInp').addEventListener('keydown',function(e){if(e.key==='Enter')el('todoAddBtn').click();});
 }
 
-el('dayModCancel').addEventListener('click',function(){el('dayMod').classList.add('h');});
-el('dayModSave').addEventListener('click',saveDayItem);
-el('dayModInp').addEventListener('keydown',function(e){if(e.key==='Enter')saveDayItem();});
 function saveDayItem(){var type=el('dayModType').value,text=el('dayModInp').value.trim();if(!text)return;var dk=dayCtx.dk,id='i'+Date.now();db.ref('personal/'+userName+'/days/'+dk+'/items/'+id).set({id:id,text:text,type:type});el('dayMod').classList.add('h');el('dayModInp').value='';}
 
 document.addEventListener('DOMContentLoaded',function(){
