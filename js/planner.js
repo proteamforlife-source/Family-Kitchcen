@@ -257,6 +257,12 @@ function refreshDayDetail(di, wk, dk) {
 
 document.addEventListener('DOMContentLoaded', function () {
 
+  var planToday = el('planToday');
+  if (planToday) planToday.addEventListener('click', function () {
+    planWeekOffset = 0; planDayOffset = 0; planMonthOffset = 0;
+    setupPlannerListener(); renderPlanner();
+  });
+
   var planPrev = el('planPrev');
   if (planPrev) planPrev.addEventListener('click', function () {
     if (plannerView === 'month') { planMonthOffset--; } else if (plannerView === 'day') { planDayOffset--; } else { planWeekOffset--; }
