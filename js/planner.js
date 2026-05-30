@@ -84,16 +84,19 @@ function updatePlannerViewBtns() {
 function renderPlanner(weekData) {
   updatePlannerViewBtns();
   if (plannerView === 'month') {
-    var dp0 = el('planDatePick');
-    if (dp0) { dp0.style.display = 'inline-block'; var dm = new Date(); dm.setMonth(dm.getMonth() + planMonthOffset); dp0.value = dKey(new Date(dm.getFullYear(), dm.getMonth(), 1)); }
+    var dp0 = el('planDatePick'); if (dp0) dp0.style.display = 'none';
+    var dpm = el('planMonthPick');
+    if (dpm) { dpm.style.display = 'inline-block'; var dm = new Date(); dm.setMonth(dm.getMonth() + planMonthOffset); dpm.value = dm.getFullYear() + '-' + String(dm.getMonth()+1).padStart(2,'0'); }
     renderPlannerMonth(); return;
   }
   if (plannerView === 'day') {
+    var dpm0 = el('planMonthPick'); if (dpm0) dpm0.style.display = 'none';
     var dp = el('planDatePick');
     if (dp) { dp.style.display = 'inline-block'; var d0 = new Date(); d0.setDate(d0.getDate() + planDayOffset); dp.value = dKey(d0); }
     renderPlannerDay(); return;
   }
-  // week view — show date picker, set to Monday of current week
+  // week view
+  var dpm1 = el('planMonthPick'); if (dpm1) dpm1.style.display = 'none';
   var dp2 = el('planDatePick');
   if (dp2) { dp2.style.display = 'inline-block'; dp2.value = dKey(getWeekDates(planWeekOffset)[0]); }
 
@@ -275,6 +278,18 @@ document.addEventListener('DOMContentLoaded', function () {
     setupPlannerListener(); renderPlanner();
   });
 
+  var planMonthPick = el('planMonthPick');
+  if (planMonthPick) {
+    planMonthPick.addEventListener('change', function () {
+      if (!this.value) return;
+      var parts = this.value.split('-');
+      var now = new Date();
+      planMonthOffset = (parseInt(parts[0]) - now.getFullYear()) * 12 + (parseInt(parts[1]) - 1 - now.getMonth());
+      plannerMonthCache = {};
+      setupPlannerListener(); renderPlanner();
+    });
+  }
+
   var planDatePick = el('planDatePick');
   if (planDatePick) {
     planDatePick.addEventListener('change', function () {
@@ -284,10 +299,6 @@ document.addEventListener('DOMContentLoaded', function () {
       var diff = Math.round((picked - today) / 86400000);
       if (plannerView === 'day') {
         planDayOffset = diff;
-      } else if (plannerView === 'month') {
-        // jump to the month containing the picked date
-        var now = new Date(); now.setHours(0,0,0,0);
-        planMonthOffset = (picked.getFullYear() - now.getFullYear()) * 12 + (picked.getMonth() - now.getMonth());
       } else {
         // week view — jump to the week containing the picked date
         planWeekOffset = Math.floor(diff / 7);
