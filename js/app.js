@@ -100,7 +100,7 @@ document.addEventListener('click',function(e){
   var t=e.target;
 
   var vi=t.closest('[data-viewimg]');if(vi){el('imgModalImg').src=vi.dataset.viewimg;el('imgModal').classList.add('on');return;}
-  var dqa=t.closest('[data-dqa]');if(dqa){if(!userName)return;db.ref('dinnerQ/'+todayKey()+'/'+userName).set(dqa.dataset.dqa);setTimeout(renderDashboard,400);return;}
+  var dqa=t.closest('[data-dqa]');if(dqa){if(!userName)return;db.ref('dinnerQ/'+todayKey()+'/'+userName).set(dqa.dataset.dqa);return;}
   var st2=t.closest('[data-switchtab]');if(st2&&!t.closest('[data-addmeal]')&&!t.closest('[data-quickdinner]')){switchTab(st2.dataset.switchtab);return;}
   var sc2=t.closest('[data-switchchat]');if(sc2){openChat();return;}
   var qd=t.closest('[data-quickdinner]');if(qd){var todayIdx2=new Date().getDay()-1;if(todayIdx2<0)todayIdx2=6;mealCtx={wk:dKey(getWeekDates(0)[0]),di:String(todayIdx2),slot:'D',recipeId:null,recipeType:null};el('mealModTitle').textContent='Suggest for Tonight';el('mealModInp').value='';el('mealModUrl').value='';el('mealSugList').innerHTML='';el('mealSugList').style.display='none';el('mealMod').classList.remove('h');return;}
