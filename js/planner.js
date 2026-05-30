@@ -84,7 +84,8 @@ function updatePlannerViewBtns() {
 function renderPlanner(weekData) {
   updatePlannerViewBtns();
   if (plannerView === 'month') {
-    var dp0 = el('planDatePick'); if (dp0) dp0.style.display = 'none';
+    var dp0 = el('planDatePick');
+    if (dp0) { dp0.style.display = 'inline-block'; var dm = new Date(); dm.setMonth(dm.getMonth() + planMonthOffset); dp0.value = dKey(new Date(dm.getFullYear(), dm.getMonth(), 1)); }
     renderPlannerMonth(); return;
   }
   if (plannerView === 'day') {
@@ -283,6 +284,10 @@ document.addEventListener('DOMContentLoaded', function () {
       var diff = Math.round((picked - today) / 86400000);
       if (plannerView === 'day') {
         planDayOffset = diff;
+      } else if (plannerView === 'month') {
+        // jump to the month containing the picked date
+        var now = new Date(); now.setHours(0,0,0,0);
+        planMonthOffset = (picked.getFullYear() - now.getFullYear()) * 12 + (picked.getMonth() - now.getMonth());
       } else {
         // week view — jump to the week containing the picked date
         planWeekOffset = Math.floor(diff / 7);
