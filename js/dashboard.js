@@ -145,4 +145,34 @@ function buildDash(allMsgs,answersList,todayItems,winner,dinners,nextEv,dqData,l
     '</div>';
 }
 
+
+function refreshDinnerQ(){
+  var dqEl=document.querySelector('.dinner-q');
+  if(!dqEl)return;
+  db.ref('dinnerQ/'+todayKey()).once('value',function(snap){
+    var dqData=snap.val()||{};
+    var myAnswer=dqData[userName]||null;
+    // update buttons
+    var btnsEl=dqEl.querySelector('.dq-btns');
+    if(btnsEl){
+      btnsEl.innerHTML=
+        '<button class="dq-btn yes'+(myAnswer==='yes'?' on':'')+'" data-dqa="yes">Yes</button>'+
+        '<button class="dq-btn'+(myAnswer==='no'?' on':'')+'" data-dqa="no">No</button>';
+    }
+    // update answers — only show Yes responses
+    var answersEl=dqEl.querySelector('.dq-answers');
+    var answersList=Object.entries(dqData)
+      .filter(function(e){return e[1]==='yes';})
+      .map(function(e){
+        var col=members[e[0]]?members[e[0]].color:'#8A7A6E';
+        return'<span class="dq-answer">'+avt(e[0],col,16)+'<span style="margin-left:3px;font-size:.75rem">'+esc(e[0])+'</span></span>';
+      }).join('');
+    if(answersEl){answersEl.innerHTML=answersList;}
+    else if(answersList){
+      var d=document.createElement('div');
+      d.className='dq-answers';d.style.marginTop='8px';d.innerHTML=answersList;
+      dqEl.appendChild(d);
+    }
+  });
+}
 function openChat(){el('chatPanel').classList.add('open');}
