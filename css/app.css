@@ -222,12 +222,12 @@ main{max-width:720px;margin:0 auto;padding:14px 12px}
 .dq-btn{background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.5);color:#fff;padding:9px 20px;border-radius:10px;cursor:pointer;font-size:.9rem;font-weight:700}
 .dq-btn.yes{background:#fff;color:var(--terra)}
 .dq-answers{margin-top:10px}
-.dq-groups{display:flex;flex-direction:column;gap:5px;align-items:center}
+.dq-groups{display:flex;flex-direction:column;gap:6px;align-items:center}
 .dq-group{display:flex;align-items:center;flex-wrap:wrap;gap:5px;justify-content:center}
 .dq-group-label{font-size:.72rem;font-weight:700;opacity:.75;margin-right:2px;white-space:nowrap}
 .dq-name{font-size:.78rem;padding:2px 9px;border-radius:20px;font-weight:500}
 .dq-name-home{background:rgba(255,255,255,.25);color:#fff}
-.dq-name-out{background:rgba(0,0,0,.12);color:rgba(255,255,255,.65)}
+.dq-away{font-size:.72rem;opacity:.55;color:#fff;letter-spacing:.01em}
 .dash-msg{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer}
 .dash-msg:last-child{border-bottom:none}
 .dash-msg-txt{font-size:.82rem;color:var(--charcoal);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
