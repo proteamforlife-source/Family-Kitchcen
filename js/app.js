@@ -34,7 +34,6 @@ if(el('pg-d').classList.contains('on')&&userName)renderDashboard();
   db.ref('events').on('value',function(snap){events=[];snap.forEach(function(c){events.push(c.val());});renderEvents();if(el('pg-d').classList.contains('on')&&userName)renderDashboard();});
   db.ref('shopping').on('value',function(snap){shopItems=[];snap.forEach(function(c){shopItems.push(c.val());});renderShopping();});
   db.ref('bills').on('value',function(snap){bills=[];snap.forEach(function(c){bills.push(c.val());});renderBills();if(el('pg-d').classList.contains('on')&&userName)renderDashboard();});
-  db.ref('calendarEvents').on('value',function(snap){calEvents=[];snap.forEach(function(c){calEvents.push(c.val());});if(el('pg-c')&&el('pg-c').classList.contains('on'))renderCalendar();});
   attachDinnerQListener();
   db.ref('planner/'+dKey(getWeekDates(0)[0])).on('value',function(){if(el('pg-d').classList.contains('on')&&userName)renderDashboard();});
   setupPlannerListener();

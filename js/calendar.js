@@ -316,15 +316,6 @@ document.addEventListener('click', function(e) {
     renderCalendar(); return;
   }
 
-  // Edit / delete calendar event
-  var caledit = t.closest('[data-caledit]');
-  if (caledit) { openCalEdit(caledit.dataset.caledit); return; }
-  var caldel = t.closest('[data-caldel]');
-  if (caldel) {
-    if (!confirm('Delete this event?')) return;
-    db.ref('calendarEvents/' + caldel.dataset.caldel).remove();
-    setTimeout(renderCalendar, 400); return;
-  }
 });
 
 document.addEventListener('DOMContentLoaded', function() {
