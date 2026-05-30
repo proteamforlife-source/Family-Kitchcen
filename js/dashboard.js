@@ -10,10 +10,7 @@ function renderDashboard(){
       var dqData=dqSnap.val()||{},myAnswer=dqData[userName]||null;
       var nextEv=null;var sorted=events.slice().sort(function(a,b){return(a.date||'9999')<(b.date||'9999')?-1:1;});for(var i=0;i<sorted.length;i++){if(sorted[i].date>=today){nextEv=sorted[i];break;}}
       var todayItems=[];if(personalData&&personalData.days&&personalData.days[today]&&personalData.days[today].items)todayItems=Object.values(personalData.days[today].items);
-      var answersList=Object.entries(dqData).map(function(e){
-        var col=members[e[0]]?members[e[0]].color:'#8A7A6E';
-        return'<span class="dq-answer">'+avt(e[0],col,16)+'<span style="margin-left:3px;font-size:.75rem">'+esc(e[0])+': '+(e[1]==='yes'?'Yes':'No')+'</span></span>';
-      }).join('');
+      var answersList=buildDinnerAnswers(dqData);
       var lastRead=personalData.lastRead||{};
       var now=new Date();now.setHours(0,0,0,0);
       var weekEnd=new Date(now);weekEnd.setDate(weekEnd.getDate()+7);
@@ -146,6 +143,29 @@ function buildDash(allMsgs,answersList,todayItems,winner,dinners,nextEv,dqData,l
 }
 
 
+function buildDinnerAnswers(dqData){
+  var home=[],out=[];
+  Object.entries(dqData).forEach(function(e){
+    if(e[1]==='yes')home.push(e[0]);
+    else if(e[1]==='no')out.push(e[0]);
+  });
+  if(!home.length&&!out.length)return'';
+  var html='<div class="dq-groups">';
+  if(home.length){
+    html+='<div class="dq-group dq-home">'+
+      '<span class="dq-group-label">Home tonight ('+home.length+')</span>'+
+      home.map(function(n){return'<span class="dq-name dq-name-home">✓ '+esc(n)+'</span>';}).join('')+
+    '</div>';
+  }
+  if(out.length){
+    var awayLine=out.length===1
+      ?'Away: '+esc(out[0])
+      :out.length+' away';
+    html+='<div class="dq-away">'+awayLine+'</div>';
+  }
+  html+='</div>';
+  return html;
+}
 function refreshDinnerQ(){
   var dqEl=document.querySelector('.dinner-q');
   if(!dqEl)return;
@@ -159,18 +179,13 @@ function refreshDinnerQ(){
         '<button class="dq-btn yes'+(myAnswer==='yes'?' on':'')+'" data-dqa="yes">Yes</button>'+
         '<button class="dq-btn'+(myAnswer==='no'?' on':'')+'" data-dqa="no">No</button>';
     }
-    // update answers — only show Yes responses
+    // update answers
     var answersEl=dqEl.querySelector('.dq-answers');
-    var answersList=Object.entries(dqData)
-      .filter(function(e){return e[1]==='yes';})
-      .map(function(e){
-        var col=members[e[0]]?members[e[0]].color:'#8A7A6E';
-        return'<span class="dq-answer">'+avt(e[0],col,16)+'<span style="margin-left:3px;font-size:.75rem">'+esc(e[0])+'</span></span>';
-      }).join('');
-    if(answersEl){answersEl.innerHTML=answersList;}
-    else if(answersList){
+    var answersHtml=buildDinnerAnswers(dqData);
+    if(answersEl){answersEl.innerHTML=answersHtml;}
+    else{
       var d=document.createElement('div');
-      d.className='dq-answers';d.style.marginTop='8px';d.innerHTML=answersList;
+      d.className='dq-answers';d.style.marginTop='10px';d.innerHTML=answersHtml;
       dqEl.appendChild(d);
     }
   });
