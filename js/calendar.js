@@ -13,6 +13,22 @@ var CAL_TYPES = {
   workout:  { icon: '💪', bg: '#fff0e8', border: '#f0c0a0', color: '#7a3010', label: 'Workout' }
 };
 
+// ── Local date key — always matches stored date strings (YYYY-MM-DD) ──
+// Never use dKey() for calendar display dates — dKey uses toISOString (UTC)
+// which shifts back one day in AEST (UTC+10). lKey uses local date parts.
+function lKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// ── Monday of the week containing d (local) ──
+function getMondayOfWeek(d) {
+  var day = new Date(d);
+  var dow = day.getDay() || 7;
+  day.setDate(day.getDate() - dow + 1);
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
 function getCalItemsForDate(dk) {
   var items = [];
   events.forEach(function(ev) {
@@ -67,9 +83,9 @@ function loadPlannerForCalendar(wkKeys, callback) {
 function getMealsForDate(dk) {
   var meals = [];
   var d = new Date(dk + 'T00:00:00');
+  var monday = getMondayOfWeek(d);
+  var wk = dKey(monday); // planner data uses dKey — intentional
   var dow = d.getDay() - 1; if (dow < 0) dow = 6;
-  var monday = new Date(d); var md = monday.getDay() || 7; monday.setDate(monday.getDate() - md + 1);
-  var wk = dKey(monday);
   var dayData = plannerCalCache[wk] && plannerCalCache[wk][dow];
   if (!dayData) return meals;
   ['B', 'L', 'D'].forEach(function(slot) {
@@ -86,15 +102,6 @@ function getMonthDatesForCal(offset) {
   var days = []; var tot = new Date(yr, mo + 1, 0).getDate();
   for (var i = 1; i <= tot; i++) days.push(new Date(yr, mo, i));
   return { days: days, label: d.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' }), year: yr, month: mo };
-}
-
-// ── Get Monday of the week containing a given date ──
-function getMondayOfWeek(d) {
-  var day = new Date(d);
-  var dow = day.getDay() || 7;
-  day.setDate(day.getDate() - dow + 1);
-  day.setHours(0, 0, 0, 0);
-  return day;
 }
 
 function openMonthJump() {
@@ -160,6 +167,7 @@ function renderCalMonth() {
   var mdata = getMonthDatesForCal(calOffset);
   var today = todayKey();
   var firstDay = mdata.days[0].getDay(); if (firstDay === 0) firstDay = 7;
+  // wkKeys for planner use dKey (planner data stored with dKey)
   var wkKeys = [];
   mdata.days.forEach(function(d) {
     var wk = dKey(getMondayOfWeek(d));
@@ -170,7 +178,8 @@ function renderCalMonth() {
     ['M','T','W','T','F','S','S'].forEach(function(d) { html += '<div class="cal-dow">' + d + '</div>'; });
     for (var i = 1; i < firstDay; i++) html += '<div></div>';
     mdata.days.forEach(function(d) {
-      var dk = dKey(d); var isT = dk === today;
+      var dk = lKey(d); // lKey — local date, matches stored event dates
+      var isT = dk === today;
       var items = getCalItemsForDate(dk).concat(getMealsForDate(dk));
       var shown = items.slice(0, 2); var more = items.length - 2;
       html += '<div class="cal-day' + (isT ? ' today' : '') + '" data-caldk="' + dk + '">';
@@ -190,17 +199,18 @@ function renderCalMonth() {
 function renderCalWeek() {
   var dates = getWeekDates(calOffset);
   var today = todayKey();
-  var wk = dKey(dates[0]);
+  var wk = dKey(dates[0]); // planner uses dKey
   loadPlannerForCalendar([wk], function() {
     var html = '<div class="cal-week-grid">';
     html += '<div class="cal-week-time-hdr"></div>';
     dates.forEach(function(d, i) {
-      var dk = dKey(d); var isT = dk === today;
+      var dk = lKey(d); // lKey for display/event matching
+      var isT = dk === today;
       html += '<div class="cal-week-col-hdr' + (isT ? ' cal-week-today' : '') + '"><div class="cal-week-day-name">' + DAYS[i] + '</div><div class="cal-week-day-num">' + d.getDate() + '</div></div>';
     });
     html += '<div class="cal-week-time" style="font-size:.65rem;padding:4px">All day</div>';
     dates.forEach(function(d) {
-      var dk = dKey(d);
+      var dk = lKey(d); // lKey for event matching
       var items = getCalItemsForDate(dk).concat(getMealsForDate(dk));
       html += '<div class="cal-week-events">';
       items.forEach(function(item) {
@@ -216,20 +226,19 @@ function renderCalWeek() {
 
 function renderCalDay() {
   var d = new Date(); d.setDate(d.getDate() + calOffset); d.setHours(0, 0, 0, 0);
-  var dk = dKey(d);
-  var wk = dKey(getMondayOfWeek(d));
+  var dk = lKey(d); // lKey — matches stored event date strings
+  var wk = dKey(getMondayOfWeek(d)); // planner uses dKey
   loadPlannerForCalendar([wk], function() {
     var allItems = getCalItemsForDate(dk).concat(getMealsForDate(dk));
     var groups = { birthday: [], event: [], meal: [], personal: [] };
     allItems.forEach(function(item) {
-      var g = item.type === 'birthday' ? 'birthday' : item.type === 'event' ? 'event' : item.type === 'meal' ? 'meal' : 'personal';
+      var g = ['birthday','event','meal'].indexOf(item.type) > -1 ? item.type : 'personal';
       if (!groups[g]) groups[g] = [];
       groups[g].push(item);
     });
-    var hasItems = allItems.length > 0;
     var sectionTitles = { birthday: '🎂 Birthdays', event: '📅 Events', meal: '🍽 Meals', personal: '📋 Schedule' };
     var html = '<div class="cal-day-view">';
-    if (!hasItems) {
+    if (!allItems.length) {
       html += '<div class="cal-day-section"><div style="text-align:center;padding:28px;color:var(--muted)">Nothing on ☀️<br><span style="font-size:.82rem">Enjoy the quiet!</span></div></div>';
     } else {
       Object.keys(groups).forEach(function(g) {
@@ -242,7 +251,7 @@ function renderCalDay() {
           html += '<div style="flex:1"><div class="cal-day-item-text">' + esc(item.text) + '</div>';
           if (item.source) html += '<div class="cal-day-item-sub">' + esc(item.source) + '</div>';
           html += '</div>';
-          if (item.id && (item.type === 'birthday' || item.type === 'event')) {
+          if (item.id) {
             html += '<div style="display:flex;gap:6px;align-items:center">';
             html += '<button class="sm sx" style="font-size:.72rem;padding:4px 10px;border-radius:8px" data-caledit="' + item.id + '">Edit</button>';
             html += '<button style="background:none;border:none;font-size:1rem;cursor:pointer;padding:2px 6px" data-caldel="' + item.id + '">🗑</button>';
@@ -287,7 +296,7 @@ function openCalEdit(id) {
 
 // ─── ALL LISTENERS ─────────────────────────────────────────────────────────
 
-// ── Nav + view + day-tap delegation (caledit/caldel handled by app.js) ──
+// ── Nav + view + day-tap (caledit/caldel handled by app.js global delegation) ──
 document.addEventListener('click', function(e) {
   var t = e.target;
 
@@ -314,11 +323,12 @@ document.addEventListener('click', function(e) {
     renderCalendar(); return;
   }
 
+  // Tap day in month → switch to day view for that date
   var caldk = t.closest('[data-caldk]');
   if (caldk && el('pg-c') && el('pg-c').classList.contains('on')) {
     calView = 'day';
     var clicked = new Date(caldk.dataset.caldk + 'T00:00:00');
-    var today = new Date(); today.setHours(0,0,0,0);
+    var today = new Date(); today.setHours(0, 0, 0, 0);
     calOffset = Math.round((clicked - today) / 86400000);
     ['month','week','day'].forEach(function(v) { var b = el('cv-'+v); if (b) b.className = 'cal-type-btn'+(calView===v?' on':''); });
     renderCalendar(); return;
@@ -331,10 +341,20 @@ document.addEventListener('DOMContentLoaded', function() {
   if (calAddBtn) calAddBtn.addEventListener('click', function() {
     if (!userName) { alert('Sign in first!'); return; }
     el('calAddName').value = '';
-    el('calAddDate').value = todayKey();
+    // Pre-fill with the date currently being viewed in day view, or today
+    if (calView === 'day') {
+      var vd = new Date(); vd.setDate(vd.getDate() + calOffset);
+      el('calAddDate').value = lKey(vd);
+    } else {
+      el('calAddDate').value = todayKey();
+    }
     el('calAddNotes').value = '';
     el('calBirthdayFields').style.display = 'none';
     el('calPersonalFields').style.display = 'none';
+    // Reset type select to Event
+    el('calTypeSelect').querySelectorAll('.cal-type-btn').forEach(function(b) {
+      b.classList.toggle('on', b.dataset.caltype === 'event');
+    });
     var savBtn = el('calAddSave'); if (savBtn) savBtn.dataset.editing = '';
     var h3 = el('calAddMod').querySelector('h3'); if (h3) h3.textContent = 'Add to Calendar';
     editCalId = '';
@@ -366,14 +386,20 @@ document.addEventListener('DOMContentLoaded', function() {
     var typeBtn = el('calTypeSelect').querySelector('.cal-type-btn.on');
     var type = typeBtn ? typeBtn.dataset.caltype : 'event';
     var notes = el('calAddNotes').value.trim();
+    // Edit existing
     if (calAddSave.dataset.editing === '1' && editCalId) {
       var updates = { name: name, date: date, notes: notes };
-      if (type === 'birthday') { updates.birthYear = el('calBirthYear').value ? parseInt(el('calBirthYear').value) : null; updates.recurring = el('calBirthdayRecurring').checked; }
+      if (type === 'birthday') {
+        updates.birthYear = el('calBirthYear').value ? parseInt(el('calBirthYear').value) : null;
+        updates.recurring = el('calBirthdayRecurring').checked;
+      }
       db.ref('calendarEvents/' + editCalId).update(updates);
-      el('calAddMod').classList.add('h'); editCalId = ''; calAddSave.dataset.editing = '';
-      var h3 = el('calAddMod').querySelector('h3'); if (h3) h3.textContent = 'Add to Calendar';
+      el('calAddMod').classList.add('h');
+      editCalId = ''; calAddSave.dataset.editing = '';
+      var h3e = el('calAddMod').querySelector('h3'); if (h3e) h3e.textContent = 'Add to Calendar';
       return;
     }
+    // Add new
     var id = 'ce' + Date.now();
     if (type === 'personal') {
       var ptype = el('calPersonalType').value;
